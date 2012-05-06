@@ -237,7 +237,6 @@
 			
 			if ((!this.clients[session1]) && (!this.clients[session2]))  // not registered either way
 			{
-				console.log("MSGHANDLER:  session not set up");
 				var occurences = (message.to.split(this.separator).length - 1);
 			
 				var data = message.to.split(this.separator);
