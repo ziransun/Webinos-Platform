@@ -1,6 +1,6 @@
 RequestExecutionLevel admin
 
-!define DEBUGBUILD 1
+!define DEBUGBUILD 0
 ; For help check http://nsis.sourceforge.net/Docs/Chapter4.html#4.2.1
 
 SetCompressor lzma
@@ -36,8 +36,8 @@ SetCompressor lzma
 !define PRODUCT_ICON "webinos.ico"
 !define INSTALLER_BANNER "installBanner.bmp"
 
-!define PRODUCT_NAME "Webinos"
-!define VERSION "v0.1-Alpha"
+!define PRODUCT_NAME "webinos"
+!define VERSION "v0.6.1-Eng-Eval"
 
 ; XP Compatibility
 !ifndef SF_SELECTED
@@ -70,9 +70,12 @@ SetCompressor lzma
   !define MUI_COMPONENTSPAGE_TEXT_TOP "Select the components to install/upgrade.  Stop any ${PRODUCT_NAME} processes if they are running.  All DLLs are installed locally."
 
   !define MUI_COMPONENTSPAGE_SMALLDESC
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_TEXT "Start webinos now"
   !define MUI_FINISHPAGE_LINK "Visit Webinos.org"
   !define MUI_FINISHPAGE_LINK_LOCATION "http://webinos.org"
-  !define MUI_FINISHPAGE_NOAUTOCLOSE
+	!define MUI_FINISHPAGE_RUN_FUNCTION "FinishRun"
+  !define MUI_FINISHPAGE_NOCLOSE
   !define MUI_ABORTWARNING
   !define MUI_ICON "${PRODUCT_ICON}"
   !define MUI_UNICON "${PRODUCT_ICON}"
@@ -99,25 +102,29 @@ SetCompressor lzma
 ;--------------------------------
 ;Language Strings
 
-  LangString DESC_SecWebinosUserSpace ${LANG_ENGLISH} "Install ${PRODUCT_NAME} user-space components."
+  LangString DESC_SecWebinosUserSpace ${LANG_ENGLISH} "Install ${PRODUCT_NAME} core components."
 
   LangString DESC_SecWebinosPZHAuto ${LANG_ENGLISH} "Automatically start ${PRODUCT_NAME} PZH at system startup"
   
   LangString DESC_SecWebinosPZPAuto ${LANG_ENGLISH} "Automatically start ${PRODUCT_NAME} PZP at system startup"
   
-  LangString DESC_SecXmppSupport ${LANG_ENGLISH} "Add ${PRODUCT_NAME} Xmpp support."
+;  LangString DESC_SecXmppSupport ${LANG_ENGLISH} "Add ${PRODUCT_NAME} Xmpp support."
   
   LangString DESC_SecOpenSSLDLLs ${LANG_ENGLISH} "Install OpenSSL DLLs locally (may be omitted if DLLs are already installed globally)."
   
-  LangString DESC_SecNodeExe ${LANG_ENGLISH} "Install Node.exe locally (may be omitted if NodeJs (version >= 0.6) is already installed globally). In this version, you must install this version of node which requires Admin privileges when running due to UAC restrictions."
-
   LangString DESC_SecMSVCR100DLL ${LANG_ENGLISH} "Install Microsoft Visual C++ 10.0 Runtime (may be omitted if it is already installed globally)."
+
+  LangString DESC_SecGTK ${LANG_ENGLISH} "Install GTK Runtime (may be omitted if it is already installed globally)."
+
+  LangString DESC_SecBonjour ${LANG_ENGLISH} "Install Bonjour Runtime (may be omitted if it is already installed globally)."
 
   LangString DESC_SecAddPath ${LANG_ENGLISH} "Add ${PRODUCT_NAME} executable directory to the current user's PATH."
 
   LangString DESC_SecAddShortcuts ${LANG_ENGLISH} "Add ${PRODUCT_NAME} documentation shortcuts to the current user's Start Menu."
 
   LangString DESC_SecEnableContext ${LANG_ENGLISH} "Enable ${PRODUCT_NAME}'s context loging in order to provide contextual user informations."
+  
+  LangString DESC_SecDebugTools ${LANG_ENGLISH} "Install debugging tools to help troubleshoot module load errors"
 
 ;--------------------------------
 ;Reserve Files
@@ -130,6 +137,11 @@ SetCompressor lzma
 
 ;--------------------------------
 ;Installer Sections
+
+Function FinishRun
+  ExecShell "" "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
+;  ExecShell "" "$INSTDIR\bin\wrt\webinosBrowser.exe"
+FunctionEnd
 
 Function .onInit
   ClearErrors
@@ -162,45 +174,119 @@ Section -pre
 
 SectionEnd
 
-Section "${PRODUCT_NAME} User-Space Components" SecWebinosUserSpace
+Section "${PRODUCT_NAME} Core Components" SecWebinosUserSpace
 SectionIn RO
 
   SetOverwrite on
   
   DetailPrint "Installing Core components"
   
+  SetOutPath "$INSTDIR"
+  File "${SRCROOT}\webinos_pzh.js" 
+  File "${SRCROOT}\webinos_pzp.js" 
+  
   SetOutPath "$INSTDIR\webinos"
-
-  File /r /x .gitignore /x test /x pom.xml /x wrt /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x common\manager\context_manager\data\contextSettings.json "${SRCROOT}\webinos\*.*"
+  File /r /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x common\manager\context_manager\data\contextSettings.json "${SRCROOT}\webinos\*.*"
   
-  SetOutPath "$INSTDIR\node_modules"
+  SetOutPath "$INSTDIR\node_modules" 
+  File /r /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wrt /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x socket.io\node_modules\socket.io-client\node_modules\active-x-obfuscator\node_modules\zeparser\benchmark.html "${SRCROOT}\node_modules\*.*"
+	
+; These are required in the node_modules folder so that certificate_manager can find them.	
+	File "${RedistPath}\Openssl\libeay32.dll"
+  File "${RedistPath}\Openssl\ssleay32.dll"
+	
+  SetOutPath "$INSTDIR\webinos\test"  
+  File /r /x certificates /x *.txt /x tools /x build.xml "${SRCROOT}\webinos\test\*.*"
   
-  File /r "${SRCROOT}\node_modules\*.*"
+;  SetOutPath "$INSTDIR\storage"
   
-  SetOutPath "$INSTDIR\demo"
-  
-  File /r /x certificates /x *.txt /x tools /x build.xml "${SRCROOT}\demo\*.*"
-  
-  SetOutPath "$INSTDIR\storage"
-  
-  File /r "${SRCROOT}\storage\*.*"
+;  File /r "${SRCROOT}\storage\*.*"
   
   SetOutPath "$INSTDIR"
   
   File "${PRODUCT_ICON}"
 
+  SetOutPath "$INSTDIR\bin"
+  File "${RedistPath}\node.exe"
+	File /r "${RedistPath}\wrt" 
+
+	; set registry parameters to autostar pzh	
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
+	; !insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzh.js$\""
+
+	; Start the ui application
+	!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}UI"  "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
+
+	; Service (auto starting)
+	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
+	; Pop $0 ; return error/success
+
+	CreateDirectory $APPDATA\webinos\wrt
+	${StrRep} $1 $INSTDIR\bin "\" "\\"
+	${StrRep} $2 $INSTDIR "\" "\\"
+	FileOpen $0 $APPDATA\webinos\wrt\webinos_pzh.json w
+	FileWrite $0 "{$\"nodePath$\": $\"$1$\",$\"workingDirectoryPath$\": $\"$2$\",$\"nodeArgs$\": $\"webinos_pzh.js$\",$\"instance$\": $\"0$\"}"
+	FileClose $0
+
+	; set registry parameters to autostar pzp
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZP"
+	;!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzp.js$\""
+
+	; Service (auto starting)
+	nsSCM::Install /NOUNLOAD "webinos_pzp" "webinos pzp" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "webinos_pzh" "" ""
+
+	CreateDirectory $APPDATA\webinos\wrt
+	${StrRep} $1 $INSTDIR\bin "\" "\\"
+	${StrRep} $2 $INSTDIR "\" "\\"
+	FileOpen $0 $APPDATA\webinos\wrt\webinos_pzp.json w
+	FileWrite $0 "{$\"nodePath$\": $\"$1$\",$\"workingDirectoryPath$\": $\"$2$\",$\"nodeArgs$\": $\"$\",$\"instance$\": $\"0$\"}"
+	FileClose $0
+
+	DetailPrint "OpenSSL DLLs" 
+
+  SetOverwrite on
+  SetOutPath "$INSTDIR\bin"
+  File "${RedistPath}\Openssl\libeay32.dll"
+  File "${RedistPath}\Openssl\ssleay32.dll"
+
+	DetailPrint "Microsoft Visual C 10.0 Runtime DLL" 
+
+  SetOverwrite on
+  SetOutPath "$INSTDIR\bin"
+  File "${RedistPath}\Microsoft.VC100.CRT\msvcp100.dll"
+  File "${RedistPath}\Microsoft.VC100.CRT\msvcr100.dll"
+
+	DetailPrint "Bonjour binaries" 
+	SetOverwrite on
+	SetOutPath "$INSTDIR\bin"
+	File "${RedistPath}\Bonjour\mdnsNSP.DLL"
+
+	DetailPrint "GTK binaries" 
+	SetOverwrite on
+	SetOutPath "$INSTDIR\bin"
+	File "${RedistPath}\GTK\freetype6.DLL"
+	File "${RedistPath}\GTK\libcairo-2.DLL"
+	File "${RedistPath}\GTK\libexpat-1.DLL"
+	File "${RedistPath}\GTK\libfontconfig-1.DLL"
+	File "${RedistPath}\GTK\zlib1.DLL"
+	File "${RedistPath}\GTK\libpng14-14.DLL"
+	
 SectionEnd
 
+/*
 Section "Enable Context" SecEnableContext
 
 SectionEnd
+*/
 
+/*
 Section "Add Xmpp support to ${PRODUCT_NAME}" SecXmppSupport
 
   SetOverwrite on
   
   DetailPrint "Installing Xmpp support"
-  
+ 
+	; todo
   SetOutPath "$INSTDIR\node_modules\"
   
   File /r /x *.exe /x *.zip /x Expat-2.0.1 /x icu /x obj /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git "${XmppModulesPath}\*.*"
@@ -212,33 +298,15 @@ Section "Add Xmpp support to ${PRODUCT_NAME}" SecXmppSupport
   File /r "${XmppModulesPath}\icu\bin\*.*"
 
 SectionEnd
+*/
 
-Section /o "AutoStart ${PRODUCT_NAME} PZH" SecWebinosPZHAuto
-	; set registry parameters to autostar pzh	
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
-    !insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"  "$INSTDIR\bin\node.exe $INSTDIR\demo\startPzh.js"
-SectionEnd
-
-Section /o "AutoStart ${PRODUCT_NAME} PZP" SecWebinosPZPAuto
-	; set registry parameters to autostar pzp
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZP"
-    !insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"  "$INSTDIR\bin\node.exe $INSTDIR\demo\startPzp.js"
-SectionEnd
-
+/*
 Section "OpenSSL DLLs" SecOpenSSLDLLs
 
   SetOverwrite on
   SetOutPath "$INSTDIR\bin"
   File "${RedistPath}\Openssl\libeay32.dll"
   File "${RedistPath}\Openssl\ssleay32.dll"
-
-SectionEnd
-
-Section "NodeJs executable" SecNodeExe
-SectionIn RO
-  SetOverwrite on
-  SetOutPath "$INSTDIR\bin"
-  File "${RedistPath}\node.exe"
 
 SectionEnd
 
@@ -254,6 +322,25 @@ Section "Microsoft Visual C 10.0 Runtime DLL" SecMSVCR100DLL
 !endif
 SectionEnd
 
+Section "Bonjour binaries" SecBonjour
+	SetOverwrite on
+	SetOutPath "$INSTDIR\bin"
+	File "${RedistPath}\Bonjour\mdnsNSP.DLL"
+SectionEnd
+
+Section "GTK binaries" SecGTK
+	SetOverwrite on
+	SetOutPath "$INSTDIR\bin"
+	File "${RedistPath}\GTK\freetype6.DLL"
+	File "${RedistPath}\GTK\libcairo-2.DLL"
+	File "${RedistPath}\GTK\libexpat-1.DLL"
+	File "${RedistPath}\GTK\libfontconfig-1.DLL"
+	File "${RedistPath}\GTK\zlib1.DLL"
+	File "${RedistPath}\GTK\libpng14-14.DLL"
+SectionEnd
+*/
+
+/*
 !ifdef DEBUGBUILD
 Section "Dependency debuging tools" SecDebugTools
 
@@ -265,7 +352,9 @@ Section "Dependency debuging tools" SecDebugTools
 
 SectionEnd
 !endif
+*/
 
+/*
 Section "Add ${PRODUCT_NAME} to PATH" SecAddPath
 
   ; remove previously set path (if any)
@@ -277,6 +366,7 @@ Section "Add ${PRODUCT_NAME} to PATH" SecAddPath
   Call AddToPath
 
 SectionEnd
+*/
 
 Section "Add Shortcuts to Start Menu" SecAddShortcuts
 
@@ -330,26 +420,29 @@ createStartShortcuts:
     
 addClientStartShortcut:
   ;Set the "start in" parameter of the shortcut
-  SetOutPath "$INSTDIR\demo"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Start PZH.lnk" $NodeExe "startPzh.js" "$INSTDIR\${PRODUCT_ICON}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Start PZP.lnk" $NodeExe "startPzp.js" "$INSTDIR\${PRODUCT_ICON}"
+  SetOutPath "$INSTDIR"
+  ;CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Start PZH.lnk" $NodeExe "webinos_pzh.js" "$INSTDIR\${PRODUCT_ICON}"
+  ;CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Start PZP.lnk" $NodeExe "webinos_pzp.js" "$INSTDIR\${PRODUCT_ICON}"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\bin\wrt\webinosBrowser.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME} service.lnk" "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
   
+  SetOutPath "$INSTDIR\webinos"
   
-  WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\PZP UI.url" "InternetShortcut" "URL" "http://localhost:8080/client/client.html"
-  WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\PZH Admin UI.url" "InternetShortcut" "URL" "http://localhost:8082/client/pzh.html"
+  ;WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\PZP UI.url" "InternetShortcut" "URL" "http://localhost:8080/client/client.html"
+  ;WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\PZH Admin UI.url" "InternetShortcut" "URL" "https://localhost:9000"
 
-  SectionGetFlags ${SecXmppSupport} $R0
-  IntOp $R0 $R0 & ${SF_SELECTED}
-  IntCmp $R0 ${SF_SELECTED} "" writeRegistryInfo writeRegistryInfo 
-    SetOutPath "$INSTDIR\webinos\common\xmpp\lib"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client 1.lnk" $NodeExe "pzp.js 0 w021@servicelab.org/mobile webinos" "$INSTDIR\${PRODUCT_ICON}"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client 2.lnk" $NodeExe "pzp.js  1 w021@servicelab.org/tv webinos" "$INSTDIR\${PRODUCT_ICON}"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client via BOSH 1.lnk" $NodeExe "node pzp.js 2 w021@servicelab.org/viabosh webinos http://xmpp.servicelab.org/jabber/" "$INSTDIR\${PRODUCT_ICON}"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client via BOSH 2.lnk" $NodeExe "node pzp.js 3 w021@servicelab.org/viabosh2 webinos http://xmpp.servicelab.org/jabber/" "$INSTDIR\${PRODUCT_ICON}"
-	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client 1 UI.url" "InternetShortcut" "URL" "http://localhost:8000"
-	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client 2 UI.url" "InternetShortcut" "URL" "http://localhost:8010"
-	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client via BOSH 1 UI.url" "InternetShortcut" "URL" "http://localhost:8020"
-	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client via BOSH 2 UI.url" "InternetShortcut" "URL" "http://localhost:8030"
+;  SectionGetFlags ${SecXmppSupport} $R0
+;  IntOp $R0 $R0 & ${SF_SELECTED}
+;  IntCmp $R0 ${SF_SELECTED} "" writeRegistryInfo writeRegistryInfo 
+;    SetOutPath "$INSTDIR\webinos\common\xmpp\lib"
+;    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client 1.lnk" $NodeExe "pzp.js 0 w021@servicelab.org/mobile webinos" "$INSTDIR\${PRODUCT_ICON}"
+;    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client 2.lnk" $NodeExe "pzp.js  1 w021@servicelab.org/tv webinos" "$INSTDIR\${PRODUCT_ICON}"
+;    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client via BOSH 1.lnk" $NodeExe "node pzp.js 2 w021@servicelab.org/viabosh webinos http://xmpp.servicelab.org/jabber/" "$INSTDIR\${PRODUCT_ICON}"
+;    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Start Xmpp PZP client via BOSH 2.lnk" $NodeExe "node pzp.js 3 w021@servicelab.org/viabosh2 webinos http://xmpp.servicelab.org/jabber/" "$INSTDIR\${PRODUCT_ICON}"
+;	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client 1 UI.url" "InternetShortcut" "URL" "http://localhost:8000"
+;	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client 2 UI.url" "InternetShortcut" "URL" "http://localhost:8010"
+;	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client via BOSH 1 UI.url" "InternetShortcut" "URL" "http://localhost:8020"
+;	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\XMPP\Xmpp PZP client via BOSH 2 UI.url" "InternetShortcut" "URL" "http://localhost:8030"
   writeRegistryInfo:
   ; Store install folder in registry
   WriteRegStr HKLM SOFTWARE\${PRODUCT_NAME} "" $INSTDIR
@@ -363,8 +456,14 @@ addClientStartShortcut:
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "DisplayIcon" "$INSTDIR\${PRODUCT_ICON}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "DisplayVersion" "${VERSION}"
 
+  nsSCM::Start "webinos_pzh"
+  nsSCM::Start "webinos_pzp"
+  
+  ; Reboot required to start services.
+  ;SetRebootFlag true
+  
   ; Advise a reboot
-  Messagebox MB_OK "IMPORTANT: Rebooting the system is advised in order to finalize the ${PRODUCT_NAME} installation (this is an informational message only, pressing OK will not reboot)."
+  ;Messagebox MB_OK "IMPORTANT: Rebooting the system is advised in order to finalize the ${PRODUCT_NAME} installation (this is an informational message only, pressing OK will not reboot)."
 
 SectionEnd
 
@@ -374,14 +473,16 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWebinosUserSpace} $(DESC_SecWebinosUserSpace)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecEnableContext} $(DESC_SecEnableContext)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecXmppSupport} $(DESC_SecXmppSupport)
+;  !insertmacro MUI_DESCRIPTION_TEXT ${SecXmppSupport} $(DESC_SecXmppSupport)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWebinosPZHAuto} $(DESC_SecWebinosPZHAuto)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWebinosPZPAuto} $(DESC_SecWebinosPZPAuto)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecOpenSSLDLLs} $(DESC_SecOpenSSLDLLs)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecNodeExe} $(DESC_SecNodeExe)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMSVCR100DLL} $(DESC_SecMSVCR100DLL)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecGTK} $(DESC_SecGTK)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecBonjour} $(DESC_SecBonjour)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecAddPath} $(DESC_SecAddPath)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecAddShortcuts} $(DESC_SecAddShortcuts)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecDebugTools} $(DESC_SecDebugTools)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
@@ -401,6 +502,12 @@ Function un.onInit
 FunctionEnd
 
 Section "Uninstall"
+
+  ; Stop and remove services
+  nsSCM::Stop "webinos_pzp"
+  nsSCM::Remove "webinos_pzp"
+  nsSCM::Stop "webinos_pzh"
+  nsSCM::Remove "webinos_pzh"
 
   ; Required to handle shortcuts properly on Vista/7
   SetShellVarContext all
@@ -424,5 +531,5 @@ Section "Uninstall"
 
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"
-  
+    
 SectionEnd

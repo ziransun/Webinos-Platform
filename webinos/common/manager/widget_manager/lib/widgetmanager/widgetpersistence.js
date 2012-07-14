@@ -279,6 +279,8 @@ this.WidgetPersistence = (function() {
 		var buf = resource.readFileSync(map.map(entry));
 		var dest = path.resolve(wgtDir, entry);
 		ManagerUtils.mkdirs(path.dirname(dest));
+        // Don't attempt to write buffer if this entry is a directory (indicated by trailing / on entry path)        
+        if (entry.substr(-1) !== '/')
 		fs.writeFileSync(dest, buf);
 	};
 

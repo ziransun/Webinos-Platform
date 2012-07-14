@@ -1,0 +1,36 @@
+doctype 5
+html(lang="en")
+	head
+		title= pageTitle
+		link(type="text/css",href="/css/style.css",rel="stylesheet")
+		script(src='/js/jquery-1.7.2.min.js')
+		script(src="/js/jquery.corner.js")
+		script(type='text/javascript')
+			$(function() {				
+				$(".page").corner("keep");
+				$(".footer").corner("bottom");						
+				setTimeout(function() {$(".feedback").hide(); },5000);
+			});
+	body
+		div.page
+			div.header
+				div.menuContainer
+					div.menuLeft
+					div.menuMiddle
+						div.menuItems.commands
+							a.menuItem(href="/") apps
+							a.menuItem(href="/store") store
+							a.menuItem(href="/tests") tests
+							a.menuItem(href="/settings/false") settings
+							a.menuItem(href="/about") about
+					div.menuRight
+				div.logo
+					img(src="/images/webinos_logo.png")
+
+			div.pageTitleContainer
+				span.pageTitle &nbsp;#{pageTitle}&nbsp;
+			div.content!= body
+			div.footer.commands
+				div.footerRight 
+					span Copyright &copy; 2012 &middot; 
+					a(target="_blank",href="http://webinos.org") webinos.org

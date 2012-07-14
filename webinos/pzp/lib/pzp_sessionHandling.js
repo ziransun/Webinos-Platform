@@ -208,7 +208,7 @@ Pzp.prototype.update = function(callback) {
   }
   //end - Zeroconf changes 
   
-self.prepMsg(self.sessionId, self.config.pzhId, "pzpDetails", global.pzpServerPort);
+	self.prepMsg(self.sessionId, self.config.pzhId, "pzpDetails", global.pzpServerPort);
   if (typeof callback !== "undefined") {
     callback.call(this, "startedPZP", this);
   }
@@ -410,7 +410,7 @@ Pzp.prototype.connect = function (conn_key, conn_csr, code, callback) {
             pzpWebSocket.startPzpWebSocketServer(self, self.inputConfig, function() {
               self.rpcHandler.setSessionId(self.sessionId);
               setupMessageHandler(self);
-	      self.update(callback);
+							self.update(callback);
             });
           }
           if(self.pzptlsServerState === global.states[0])

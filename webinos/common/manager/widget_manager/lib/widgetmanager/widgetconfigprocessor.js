@@ -66,8 +66,12 @@ this.WidgetConfigProcessor = (function() {
 	var processUriAttr = function(str) {
 		str = processTextAttr(str);
 		var result = url.parse(str);
-		if(result.href != str)
+        if (typeof result.host === "undefined" || typeof result.protocol === "undefined") {
 			result = undefined;
+        } else {
+            // Undo the lowercase-ing of the protocol and host performed by url.parse
+            result.href = str;
+        }
 		return result;
 	};
 
@@ -106,6 +110,7 @@ this.WidgetConfigProcessor = (function() {
 		var widgetConfig = this.widgetConfig = new WidgetConfig();
 
 		var error = function() {
+			//console.log("parser on.error");
 			/* throw to exit the parser */
 			throw 'WidgetConfigProcessor.processConfigurationDocument: error';
 		};
@@ -179,6 +184,7 @@ this.WidgetConfigProcessor = (function() {
 			var parser = this.parser = new Parser('UTF-8');
 
 			var startDocument = function(elt) {
+				//console.log("starting document");
 				var isWidget = elt.isWidget = (elt.nsUri == WIDGETS_NS);
 				var name = elt.name;
 				var attrs = elt.attrs;
@@ -275,7 +281,7 @@ this.WidgetConfigProcessor = (function() {
 					 * ignore the attribute.
 					 */
 					var height = processNonNegativeIntAttr(attrs.height);
-					if(height == -1) {
+                    if (height <= 0) {
 						Logger.logAction(Logger.LOG_MINOR, "ta-BxjoiWHaMr", "ignoring invalid widgetHeight");
 					} else {
 						Logger.logAction(Logger.LOG_MINOR, "ta-BxjoiWHaMr", "set widgetHeight");
@@ -286,20 +292,22 @@ this.WidgetConfigProcessor = (function() {
 				if('width' in attrs) {
 					/*
 					 * ASSERTION # ta-BxjoiWHaMr
-					 * If the height attribute is used, then let normalized height be the
+                    * If the width attribute is used, then let normalized width be the
 					 * result of applying the rule for parsing a non-negative integer to
-					 * the value of the attribute. If the normalized height is not in error
-					 * and greater than 0, then let widget height be the value of normalized
-					 * height. If the height attribute is in error, then the user agent MUST
+                    * the value of the attribute. If the normalized width is not in error
+                    * and greater than 0, then let widget width be the value of normalized
+                    * width. If the width attribute is in error, then the user agent MUST
 					 * ignore the attribute.
 					 */
 					var width = processNonNegativeIntAttr(attrs.width);
-					if(width == -1) {
+		    
+                    if (width <= 0) {
 						Logger.logAction(Logger.LOG_MINOR, "ta-UScJfQHPPy", "ignoring invalid widgetWidth");
 					} else {
 						Logger.logAction(Logger.LOG_MINOR, "ta-UScJfQHPPy", "set widgetWidth");
 						widgetConfig.width = width;
 					}
+
 				}
 
 				if('viewmodes' in attrs) {
@@ -324,11 +332,13 @@ this.WidgetConfigProcessor = (function() {
 			};
 
 			var startElement = function(elt) {
-				/* console.log('startElement: name: ' + elt.nsName); */
+                //console.log('startElement: name: ' + elt.nsName);
 				var isWidget = elt.isWidget = (elt.nsUri == WIDGETS_NS);
 				var eltName = elt.nsName;
 				var attrs = elt.attrs;
 				var parent = elt.parent;
+                elt.hasLang = "xml:lang" in elt.attrs;
+                elt.xmlLang = elt.hasLang ? elt.attrs["xml:lang"] : "";
 
 				if('dir' in attrs) {
 					processDirAttr(elt);
@@ -369,6 +379,7 @@ this.WidgetConfigProcessor = (function() {
 					 *    a description element.
 					 * 2. let widget description be the result of applying the rule for
 					 *    getting text content to this element.
+                    *
 					 */
 					beginLocalisableElement(elt, parent, descriptionElements);
 
@@ -403,10 +414,13 @@ this.WidgetConfigProcessor = (function() {
 					elt.isValid = parent.isRoot;
 					if(elt.isValid) {
 						var email, href;
-						if('href' in attrs)
-							href = processUriAttr(attrs.href).href;
+                        if ('href' in attrs) {
+                            href = processUriAttr(attrs.href);
+                            if (typeof href !== "undefined")
+                                href = href.href;
+                        }
 						if('email' in attrs)
-							href = processTextAttr(attrs.email);
+                            email = processTextAttr(attrs.email);
 						widgetConfig.author = {href: href, email: email};
 						beginDirectionalElement(elt, parent);
 					}
@@ -624,6 +638,7 @@ this.WidgetConfigProcessor = (function() {
 					} else {
 						processingResult.setError(new Artifact(WidgetConfig.STATUS_CAPABILITY_ERROR, Artifact.CODE_INCOMPATIBLE_CONTENT, 'ta-paIabGIIMC', null));
 						parser.emit('error', new Error('ta-paIabGIIMC'));
+			
 						return;
 					}
 					/*
@@ -724,6 +739,7 @@ this.WidgetConfigProcessor = (function() {
 						 */
 						if(required) {
 							Logger.logAction(Logger.LOG_ERROR, 'ta-vOBaOcWfll', 'rejecting unsupported required feature: ' + name);
+			
 							processingResult.setError(new Artifact(
 									WidgetConfig.STATUS_CAPABILITY_ERROR,
 									Artifact.CODE_INCOMPATIBLE_FEATURE,
@@ -828,11 +844,10 @@ this.WidgetConfigProcessor = (function() {
 						value = processTextAttr(attrs.value);
 					if('readonly' in attrs)
 						readonly = (processTextAttr(attrs.readonly) == 'true');
-					Logger.logAction(Logger.LOG_MINOR, "DwhJBIJRQN", "adding preference " + name + ": " + value);
+                    else
+                        readonly = false;
+                    Logger.logAction(Logger.LOG_MINOR, "DwhJBIJRQN", "adding preference with name '" + name + "' and value '" + value + "'");
 					preferences[name] = new Preference(name, value, readonly);
-
-				} else if(isWidget && eltName == 'span') {
-					beginDirectionalElement(elt, parent);
 
 				} else if(isWidget && eltName == 'access') {
 					/*
@@ -922,11 +937,13 @@ this.WidgetConfigProcessor = (function() {
 					 */
 					Logger.logAction(Logger.LOG_MINOR, "ta-13", "adding access request " + origin);
 					accesses[origin] = access;
+                } else if (isWidget) { // && eltName == 'span') {
+                    beginDirectionalElement(elt, parent);
 				}
 			};
 
 			var endElement = function(elt) {
-				/* console.log('endElement: ' + elt.nsName); */
+				//console.log('endElement: ' + elt.nsName); 
 				var name = elt.nsName;
 				var dir = elt.nsAttrs.dir ?  elt.nsAttrs.dir.value : BidiUtil.DIR_NONE;
 				var parent = elt.parent;
@@ -940,8 +957,9 @@ this.WidgetConfigProcessor = (function() {
 						elt.descriptionText = normaliseUnicodeWhitespace(elt.unicode, dir);
 				} else if(name == 'author') {
 					endDirectionalElement(elt, parent);
-					if(elt.unicode)
+                    if (elt.unicode) {
 						widgetConfig.author.name = normaliseUnicodeWhitespace(elt.unicode, dir);
+                    }
 				} else if(name == 'license') {
 					endLocalisableElement(elt, parent, licenseElements);
 					if(elt.unicode)
@@ -954,13 +972,13 @@ this.WidgetConfigProcessor = (function() {
 				} else if(name == 'access') {
 				} else if(name == 'preference') { */
 
-				} else if(name == 'span') {
+                } else { //if (name == 'span') {
 					endDirectionalElement(elt, parent);
 				}
 			};
 
 			var text = function(elt, string) {
-				/* console.log('text: ' + string); */
+				//console.log('text: ' + string); 
 				if('unicode' in elt) elt.unicode += string;
 			};
 
@@ -974,7 +992,7 @@ this.WidgetConfigProcessor = (function() {
 			};
 
 			var endDocument = function() {
-				/* console.log('end document'); */
+				//console.log('end document'); 
 				if(processingResult.status == WidgetConfig.STATUS_OK) {
 					/* choose name element */
 					var nameElt = chooseLocalisedElement(nameElements);
@@ -1015,11 +1033,23 @@ this.WidgetConfigProcessor = (function() {
 			parser.on('error', error);
 
 			try {
+				//console.log("about to parse");				
 				parser.parse(configBuffer, {isFinal:true});
 			} catch(e) {
+			//console.log(e);
+			//console.log(e.stack);
+                // Toby - needed to prevent continued processing after exception.
+                if (processingResult.status == WidgetConfig.STATUS_OK)
+                    processingResult.status = WidgetConfig.STATUS_INVALID;
 				if(processListener)
 					processListener(processingResult);
 			}
+        } else {
+            // Toby - failed to extract config from resource.
+            if (processingResult.status == WidgetConfig.STATUS_OK)
+                processingResult.status = WidgetConfig.STATUS_INVALID;
+            if (processListener)
+                processListener(processingResult);
 		}
 	};
 

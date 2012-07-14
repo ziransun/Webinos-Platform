@@ -17,7 +17,14 @@
 *******************************************************************************/
 var pzp   = require("./webinos/pzp/lib/pzp");
 
-var debug = require("./webinos/pzp/lib/session").common.debug;
+// Web-runtime server
+var wrt;
+if (process.platform !== "android") {
+	wrt = require("./webinos/wrt/lib/wrtServer/wrtServer");
+}
+
+var session = require("./webinos/pzp/lib/session");
+var debug = session.common.debug;
 var log   = new debug("pzp_start");
 
 var fs = require("fs"),
@@ -142,11 +149,33 @@ fs.readFile(path.join(__dirname, "config-pzp.json"), function(err, data) {
     initializePzp(config, pzpModules);
 });
 
+function initializeWRT() {
+	if (typeof wrt !== "undefined") {
+		wrt.start(function (msg, wrtPort) {
+			if (msg === "startedWRT") {
+				var wrtConfig = {};
+				wrtConfig.runtimeWebServerPort = wrtPort;
+				wrtConfig.pzpWebSocketPort = session.configuration.pzpHttpServerPort;
+				fs.writeFile((session.common.webinosConfigPath() + '/wrt/webinos_runtime.json'), JSON.stringify(wrtConfig, null, ' '), function (err) {
+					if (err) {
+						log.error('error saving runtime configuration file: ' + err);
+					} else {
+						log.info('saved configuration runtime file');
+					}
+				});						
+			} else {
+						log.error('error starting wrt server: ' + msg);
+			}
+		});
+	}
+}
+
 function initializePzp(config, pzpModules) {
   pzpInstance = new pzp.session();
   pzpInstance.initializePzp(config, pzpModules, function(result) {
     if (result === "startedPZP"){
       log.info("sucessfully started");
+			initializeWRT();
     }
   });
 }

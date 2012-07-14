@@ -58,6 +58,8 @@ this.Config = (function() {
 	  /* FIXME: remove nasty hack */
 	  if(process.platform == 'android')
 		  wrtHome = '/data/data/org.webinos.app/wrt';
+	  else if (process.platform == 'win32')
+		  wrtHome = process.env['AppData'] + '/webinos/widgetStore';
 	  else
 		  throw new Error('widgetmanager.Config: FATAL ERROR: WRT_HOME not configured');
   }

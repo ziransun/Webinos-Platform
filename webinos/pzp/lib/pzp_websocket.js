@@ -93,6 +93,10 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
       });
     });
 
+		cs.on("listening", function() {
+      log.info("pzp web server listening on port " + session.configuration.pzpWebServerPort);
+		});
+		
     cs.on("error", function(err) {
       if (err.code === "EADDRINUSE") {
         session.configuration.pzpWebServerPort = parseInt(session.configuration.pzpWebServerPort, 10) + 1;
@@ -100,9 +104,7 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
       }
     });
 
-    cs.listen(session.configuration.pzpWebServerPort, config.pzpHost, function(){
-      log.info("listening on port "+session.configuration.pzpWebServerPort);
-    });
+    cs.listen(session.configuration.pzpWebServerPort, config.pzpHost);
 
     var httpserver = http.createServer(function(request, response) {
       log.info("received request for " + request.url);
@@ -110,21 +112,21 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
       response.end();
     });
 
+		httpserver.on("listening", function() {
+      log.info("pzp websocket server listening on port " + session.configuration.pzpHttpServerPort + " and hostname " + config.pzpHost);
+      callback("startedWebSocketServer");
+		});
+		
     httpserver.on("error", function(err) {
       log.error(err);
       if (err.code === "EADDRINUSE") {
-        // BUG why make up a port ourselves?
-        // Response: not making port, doing it automatically instead of throwing error .., if user wants different ports they can do themselves at startup
         session.configuration.pzpHttpServerPort = parseInt(session.configuration.pzpHttpServerPort, 10) +1;
         log.error("address in use, now trying port " + session.configuration.pzpHttpServerPort);
         httpserver.listen(session.configuration.pzpHttpServerPort, config.pzpHost);
       }
     });
 
-    httpserver.listen(session.configuration.pzpHttpServerPort, config.pzpHost, function() {
-      log.info("listening on port "+session.configuration.pzpHttpServerPort + " and hostname "+config.pzpHost);
-      callback("startedWebSocketServer");
-    });
+    httpserver.listen(session.configuration.pzpHttpServerPort, config.pzpHost);
 
     function wsMessage(connection, utf8Data) {
       //schema validation

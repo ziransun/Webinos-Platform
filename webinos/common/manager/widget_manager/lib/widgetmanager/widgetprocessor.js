@@ -105,7 +105,7 @@ this.WidgetProcessor = (function() {
 
   var isSupportedEncoding = function(encoding) {
     for(var i in config.capabilities.encodings) {
-      if(config.capabilities.encodings[i].toLowerCase() == type) return true;
+      if(config.capabilities.encodings[i].toLowerCase() == encoding) return true;
     }
     return false;
   };
@@ -165,7 +165,7 @@ this.WidgetProcessor = (function() {
 
   WidgetProcessor.prototype.setError = function(errorArtifact) {
     Logger.logAction(Logger.LOG_ERROR, errorArtifact.reason, errorArtifact.getStatusText());
-    console.log('status: ' + errorArtifact.status);
+    //console.log('status: ' + errorArtifact.status);
     this.processingResult.setError(errorArtifact);
     this.onError();
   };
@@ -212,7 +212,7 @@ this.WidgetProcessor = (function() {
         } else {
           widgetConfig.installId = WidgetProcessor.getWidgetResourceHash(that.res);
 		}
-      console.log(util.inspect(widgetConfig));
+      //console.log(util.inspect(widgetConfig));
       if(that.processListener)
         that.processListener(that.processingResult);
     };
