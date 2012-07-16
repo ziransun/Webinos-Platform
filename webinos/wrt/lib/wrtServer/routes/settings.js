@@ -62,7 +62,7 @@
             pzpConfig.nodeArgs = 'webinos_pzp.js --auth-code=\"' + req.body.authCode + '\" --pzh-name=\"' + req.body.pzhName + '\"';
             pzpConfig.instance++;
 
-            fs.writeFile((common.webinosConfigPath() + '/webinos_pzp.json'), JSON.stringify(pzpConfig, null, ' '), function (err) {
+            fs.writeFile((common.webinosConfigPath() + '/wrt/webinos_pzp.json'), JSON.stringify(pzpConfig, null, ' '), function (err) {
                 if (err) {
                     console.log('error saving pzp configuration file');
                     res.redirect('/settings/failure');

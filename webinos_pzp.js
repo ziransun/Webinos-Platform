@@ -175,8 +175,8 @@ function initializePzp(config, pzpModules) {
   pzpInstance.initializePzp(config, pzpModules, function(result) {
     if (result === "startedPZP"){
       log.info("sucessfully started");
-			initializeWRT();
     }
+		initializeWRT();
   });
 }
 

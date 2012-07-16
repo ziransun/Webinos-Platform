@@ -21,7 +21,9 @@
         };
 
         var clientReq = http.get(options, function (clientResponse) {
-            var targetFilePath = common.webinosConfigPath() + '/widget-downloads/' + filename;
+						var targetFilePath = common.webinosConfigPath() + '/widgetDownloads';
+						fs.mkdirSync(targetFilePath);
+            targetFilePath = targetFilePath + "/" + filename;
             var downloadfile = fs.createWriteStream(targetFilePath, {'flags': 'w'});
             downloadfile.on('close',function() { callback(true, targetFilePath); });
         
@@ -103,7 +105,7 @@
                 });
             }
             else
-                res.render('install', { pageTitle: 'install download failed', id: req.param('id', 'missing!') });
+                res.render('install', { pageTitle: 'install download failed', id: req.param('id', 'missing!'), success: false });
         });
     };
 
