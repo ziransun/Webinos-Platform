@@ -22,7 +22,13 @@
 
         var clientReq = http.get(options, function (clientResponse) {
 						var targetFilePath = common.webinosConfigPath() + '/widgetDownloads';
-						fs.mkdirSync(targetFilePath);
+
+						try {
+							fs.statSync(targetFilePath);
+						}	catch (e) {
+							fs.mkdirSync(targetFilePath)
+						}
+	
             targetFilePath = targetFilePath + "/" + filename;
             var downloadfile = fs.createWriteStream(targetFilePath, {'flags': 'w'});
             downloadfile.on('close',function() { callback(true, targetFilePath); });

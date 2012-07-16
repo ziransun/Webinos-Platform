@@ -189,12 +189,17 @@ SectionIn RO
   File /r /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x common\manager\context_manager\data\contextSettings.json "${SRCROOT}\webinos\*.*"
   
   SetOutPath "$INSTDIR\node_modules" 
-  File /r /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wrt /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x socket.io\node_modules\socket.io-client\node_modules\active-x-obfuscator\node_modules\zeparser\benchmark.html "${SRCROOT}\node_modules\*.*"
+  File /r /x deps /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wrt /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x socket.io\node_modules\socket.io-client\node_modules\active-x-obfuscator\node_modules\zeparser\benchmark.html "${SRCROOT}\node_modules\*.*"
 	
 ; These are required in the node_modules folder so that certificate_manager can find them.	
 	File "${RedistPath}\Openssl\libeay32.dll"
   File "${RedistPath}\Openssl\ssleay32.dll"
-	
+
+; They are also required in the dcrypt folder (some reason they are not loaded using PATH)	
+	SetOutPath "$INSTDIR\node_modules\dcrypt\build\default"
+	File "${RedistPath}\Openssl\libeay32.dll"
+  File "${RedistPath}\Openssl\ssleay32.dll"
+
   SetOutPath "$INSTDIR\webinos\test"  
   File /r /x certificates /x *.txt /x tools /x build.xml "${SRCROOT}\webinos\test\*.*"
   
@@ -209,6 +214,8 @@ SectionIn RO
   SetOutPath "$INSTDIR\bin"
   File "${RedistPath}\node.exe"
 	File /r "${RedistPath}\wrt" 
+	File "${RedistPath}\zip.dll"
+	File "${RedistPath}\libexpat.dll"
 
 	; set registry parameters to autostar pzh	
 	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
@@ -255,7 +262,7 @@ SectionIn RO
   SetOutPath "$INSTDIR\bin"
   File "${RedistPath}\Microsoft.VC100.CRT\msvcp100.dll"
   File "${RedistPath}\Microsoft.VC100.CRT\msvcr100.dll"
-
+	
 	DetailPrint "Bonjour binaries" 
 	SetOverwrite on
 	SetOutPath "$INSTDIR\bin"

@@ -6,46 +6,49 @@ script(type="text/javascript")
 				$(this).addClass("widgetListItemHighlight"); 
 				var that = this;
 				timers.push(that);
-				setTimeout(function() { if (timers.indexOf(that) >= 0) $(that).find(".widgetListOptions").show(); }, 500);
+				setTimeout(function() { 
+					if (timers.indexOf(that) >= 0) { 
+						$(that).unbind('click');
+						$(that).find(".widgetListOptions").show(); 
+						$(that).find(".widgetListItemIcon").hide(); 
+					} 
+				}, 1500);
 			}, 
 			function() { 
 				timers.pop(this);
 				$(this).removeClass("widgetListItemHighlight"); 
 				$(this).find(".widgetListOptions").hide();
-			}
+				$(this).find(".widgetListItemIcon").show();
+				$(this).click(function() { window.open($(this).find(".widgetLaunch").attr("hRef")); return false; });			}
 		);
 		$(".widgetListOptions").hover(function() { $(this).parent().unbind("click"); }, function() { $(this).parent().click(function() { window.open($(this).find("a").attr("hRef")); return false; }); });
-		$(".widgetListItem").click(function() { window.open($(this).find("a").attr("hRef")); return false; });
+		$(".widgetListItem").click(function() { window.open($(this).find(".widgetLaunch").attr("hRef")); return false; });
 	});
 
 -	if (list.length)
-		div.widgetList
-			- var itemsPerColumn = 6;
+		div.widgetList.clearfix
 			- var listIdx = 0;
-			table(cellpadding="0", cellspacing="0")
-				- while (listIdx < list.length)
-					tr
-						- var columnCounter = 0;
-						- while (columnCounter < itemsPerColumn && listIdx < list.length)
-							- var item = list[listIdx];
-							- if (item.name)		
-								td
-									div.widgetListItem
-										- if (item.prefIcon)
-											div.widgetListItemIcon
-												img(src='wgt://#{item.installId}/#{item.prefIcon}', width="64px", height="64px")
-										- else
-											div.widgetListItemIcon(style="background: url('images/no-icon.png') left top no-repeat;")
-										div.widgetListItemDetails
-											- if (item.name)
-												a(target="_blank",href="wgt://" + item.installId)= item.name.unicode
-											- else
-												a(target="_blank",href="wgt://" + item.installId)= item.installId
-										div.widgetListOptions
-											&middot; 
-											a(href="/") about
-											br
-											&middot; 
-											a(href="/uninstall/#{item.installId}") uninstall
-								- columnCounter++;
-							- listIdx++;
+			- while (listIdx < list.length)
+				- var item = list[listIdx];
+				- if (item.name)		
+					div.widgetListItem
+						div.widgetListItemDetails
+							div.widgetListOptions
+								div.widgetListOption
+									a(href="/") about
+								div.widgetListOption
+									a(href="/uninstall/#{item.installId}") uninstall
+							div.widgetListItemIcon
+								- if (item.prefIcon)
+									img(src='wgt://#{item.installId}/#{item.prefIcon}', width="64px", height="64px")
+								- else
+									div(style="background: url('images/no-icon.png') left top no-repeat;")
+							div.widgetListItemTitle
+								- if (item.name)
+									- var dispName = item.name.unicode + " " + item.name.unicode;
+									- if (dispName.length > 30)
+										- dispName = dispName.substr(0,30) + "...";
+									a.widgetLaunch(target="_blank",href="wgt://" + item.installId)= dispName
+								- else
+									a.widgetLaunch(target="_blank",href="wgt://" + item.installId)= item.installId
+				- listIdx++;

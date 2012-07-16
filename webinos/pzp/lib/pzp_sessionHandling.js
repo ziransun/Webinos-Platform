@@ -585,7 +585,9 @@ Pzp.prototype.initializePzp = function(config, modules, callback) {
                   });
                 }
               });
-            }
+            } else {
+							callback.call(this, "startedPZP", this);
+						}
           });
         });
       } catch (err) {

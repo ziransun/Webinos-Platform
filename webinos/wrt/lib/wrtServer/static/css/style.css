@@ -54,7 +54,8 @@ a:hover
 .page
 {
     background-color: #ffffff;
-    width: 600px;
+    width: 90%;
+		min-width: 600px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -145,17 +146,29 @@ a:hover
     color: #ffffff;
 }
 
+.clearfix:after 
+{
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: &quot; &quot;;
+	clear: both;
+	height: 0;
+}
+
+.clearfix 
+{
+	display: inline-block;
+}
+
 .content
 {
     padding: 0 10px 10px 10px;
-    height: 400px;
 }
 
 .footer
 {
-    background-image: url('/images/footerBg-repeat.png');
-    background-repeat: repeat-y;
-    background-position: -12px;
+		background-color: #006d88;
     min-height: 20px;
     padding: 10px;
     margin-bottom: 10px;
@@ -177,8 +190,7 @@ a:hover
 
 .widgetList
 {
-    overflow: auto;
-    height: 400px;
+   
 }
 
 .widgetList td
@@ -191,6 +203,7 @@ a:hover
     border: 1px solid transparent;
     height: 100px;
     width: 100px;
+		float: left;
 }
 
 .widgetListItemHighlight
@@ -203,10 +216,11 @@ a:hover
 {
     width: 64px;
     height: 64px;
-    margin: 2px auto 2px auto;
-}
+    margin: 2px auto 2px auto;}
 
 .widgetListItemDetails
+
+.widgetListItemTitle
 {
     font-size: 0.8em;
     text-align: center;
@@ -214,19 +228,24 @@ a:hover
 
 .widgetListOptions
 {
-    background-color: #057591;
     display: none;
-    padding: 4px;
-    border: 1px solid #057591;
     color: #9FC6D0;
+		min-height: 64px;
 }
 
-.widgetListOptions a
+.widgetListOption
+{
+	background-color: #057591;
+	padding: 4px;
+	margin: 2px;
+}
+
+.widgetListOption a
 {
     color: #C5DEE4;
 }
 
-.widgetListOptions a:hover
+.widgetListOption a:hover
 {
     color: #ffffff;
 }
