@@ -250,10 +250,14 @@ a:hover
     color: #ffffff;
 }
 
+.widgetStoreLoading
+{
+	width:32px;
+	margin: auto 100px auto 100px;
+}
+
 .widgetStoreList
 {
-    overflow: auto;
-    height: 400px;
 }
 
 .widgetStoreListItem

@@ -37,7 +37,7 @@ SetCompressor lzma
 !define INSTALLER_BANNER "installBanner.bmp"
 
 !define PRODUCT_NAME "webinos"
-!define VERSION "v0.6.1-Eng-Eval"
+!define VERSION "0.6.2"
 
 ; XP Compatibility
 !ifndef SF_SELECTED
@@ -49,7 +49,7 @@ SetCompressor lzma
 
   ;General
 
-  OutFile "${PRODUCT_NAME}-${VERSION}-install.exe"
+  OutFile "${PRODUCT_NAME}-install-${VERSION}.exe"
 
   ShowInstDetails show
   ShowUninstDetails show
@@ -103,6 +103,8 @@ SetCompressor lzma
 ;Language Strings
 
   LangString DESC_SecWebinosUserSpace ${LANG_ENGLISH} "Install ${PRODUCT_NAME} core components."
+	
+	LangString DESC_SecWebinosLocalPZH ${LANG_ENGLISH} "Install local PZH"
 
   LangString DESC_SecWebinosPZHAuto ${LANG_ENGLISH} "Automatically start ${PRODUCT_NAME} PZH at system startup"
   
@@ -140,7 +142,8 @@ SetCompressor lzma
 
 Function FinishRun
   ExecShell "" "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
-;  ExecShell "" "$INSTDIR\bin\wrt\webinosBrowser.exe"
+	Sleep 10000
+	ExecShell "" "$INSTDIR\bin\wrt\webinosBrowser.exe"
 FunctionEnd
 
 Function .onInit
@@ -217,16 +220,22 @@ SectionIn RO
 	File "${RedistPath}\zip.dll"
 	File "${RedistPath}\libexpat.dll"
 
-	; set registry parameters to autostar pzh	
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
-	; !insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzh.js$\""
-
 	; Start the ui application
 	!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}UI"  "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
 
+	; set registry parameters to autostar pzp
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZP"
+	;!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzp.js$\""
+
 	; Service (auto starting)
-	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
-	; Pop $0 ; return error/success
+	nsSCM::Install /NOUNLOAD "webinos_pzp" "webinos pzp" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
+
+	CreateDirectory $APPDATA\webinos\wrt
+	${StrRep} $1 $INSTDIR\bin "\" "\\"
+	${StrRep} $2 $INSTDIR "\" "\\"
+	FileOpen $0 $APPDATA\webinos\wrt\webinos_pzp.json w
+	FileWrite $0 "{$\"nodePath$\": $\"$1$\",$\"workingDirectoryPath$\": $\"$2$\",$\"nodeArgs$\": $\"webinos_pzp.js$\",$\"instance$\": $\"0$\"}"
+	FileClose $0
 
 	CreateDirectory $APPDATA\webinos\wrt
 	${StrRep} $1 $INSTDIR\bin "\" "\\"
@@ -234,21 +243,7 @@ SectionIn RO
 	FileOpen $0 $APPDATA\webinos\wrt\webinos_pzh.json w
 	FileWrite $0 "{$\"nodePath$\": $\"$1$\",$\"workingDirectoryPath$\": $\"$2$\",$\"nodeArgs$\": $\"webinos_pzh.js$\",$\"instance$\": $\"0$\"}"
 	FileClose $0
-
-	; set registry parameters to autostar pzp
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZP"
-	;!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzp.js$\""
-
-	; Service (auto starting)
-	nsSCM::Install /NOUNLOAD "webinos_pzp" "webinos pzp" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "webinos_pzh" "" ""
-
-	CreateDirectory $APPDATA\webinos\wrt
-	${StrRep} $1 $INSTDIR\bin "\" "\\"
-	${StrRep} $2 $INSTDIR "\" "\\"
-	FileOpen $0 $APPDATA\webinos\wrt\webinos_pzp.json w
-	FileWrite $0 "{$\"nodePath$\": $\"$1$\",$\"workingDirectoryPath$\": $\"$2$\",$\"nodeArgs$\": $\"$\",$\"instance$\": $\"0$\"}"
-	FileClose $0
-
+	
 	DetailPrint "OpenSSL DLLs" 
 
   SetOverwrite on
@@ -278,6 +273,21 @@ SectionIn RO
 	File "${RedistPath}\GTK\zlib1.DLL"
 	File "${RedistPath}\GTK\libpng14-14.DLL"
 	
+  SetShellVarContext all
+  SetOverwrite on
+  CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+	
+SectionEnd
+
+Section "Add ${PRODUCT_NAME} local PZH" SecWebinosLocalPZH
+	; set registry parameters to autostar pzh	
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
+	; !insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzh.js$\""
+
+	; Service (auto starting)
+	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
+	; Pop $0 ; return error/success
+
 SectionEnd
 
 /*
@@ -375,6 +385,7 @@ Section "Add ${PRODUCT_NAME} to PATH" SecAddPath
 SectionEnd
 */
 
+/*
 Section "Add Shortcuts to Start Menu" SecAddShortcuts
 
   ; Required to handle shortcuts properly on Vista/7
@@ -387,6 +398,7 @@ Section "Add Shortcuts to Start Menu" SecAddShortcuts
   WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\Documentation\Contact.url" "InternetShortcut" "URL" "http://dev.webinos.org/deliverables/wp3/contact.html"
  
 SectionEnd
+*/
 
 ;--------------------
 ;Post-install section
@@ -479,6 +491,7 @@ SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWebinosUserSpace} $(DESC_SecWebinosUserSpace)
+	!insertmacro MUI_DESCRIPTION_TEXT $(SecWebinosLocalPZH} $(DESC_SecWebinosLocalPZH)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecEnableContext} $(DESC_SecEnableContext)
 ;  !insertmacro MUI_DESCRIPTION_TEXT ${SecXmppSupport} $(DESC_SecXmppSupport)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWebinosPZHAuto} $(DESC_SecWebinosPZHAuto)

@@ -1,7 +1,12 @@
 - if (success)
-	div widget installed successfully.
-		div
+	div The widget installation was successful, you can 
+			a(target="_blank", href="wgt://#{installId}") launch the widget now
+			.
 			br
-			a(target="_blank", href="wgt://#{installId}") launch widget now
+			br
+			br
+	div Alternatively, 
+		a(href="/") go to installed applications
+		.
 - else
-	div failed to install widget #{id}
+	div Failed to install widget #{id}.

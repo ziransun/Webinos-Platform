@@ -173,10 +173,11 @@ function initializeWRT() {
 function initializePzp(config, pzpModules) {
   pzpInstance = new pzp.session();
   pzpInstance.initializePzp(config, pzpModules, function(result) {
+		log.info("initializePzp result is: " + result);
     if (result === "startedPZP"){
       log.info("sucessfully started");
+			initializeWRT();
     }
-		initializeWRT();
   });
 }
 
