@@ -253,7 +253,10 @@ a:hover
 .widgetStoreLoading
 {
 	width:32px;
-	margin: auto 100px auto 100px;
+	margin-left: auto;
+	margin-top:	100px;
+	margin-right: auto;
+	margin-bottom:	100px;
 }
 
 .widgetStoreList

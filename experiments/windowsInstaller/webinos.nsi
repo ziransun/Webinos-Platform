@@ -37,7 +37,7 @@ SetCompressor lzma
 !define INSTALLER_BANNER "installBanner.bmp"
 
 !define PRODUCT_NAME "webinos"
-!define VERSION "0.6.2"
+!define VERSION "0.6.3"
 
 ; XP Compatibility
 !ifndef SF_SELECTED
@@ -227,9 +227,23 @@ SectionIn RO
 	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZP"
 	;!insertmacro WriteRegStringIfUndef HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"  "$INSTDIR\bin\node.exe $\"$INSTDIR\webinos_pzp.js$\""
 
-	; Service (auto starting)
+  ; Create services based on whether user wants a local PZH or not.
+  SectionGetFlags ${SecWebinosLocalPZH} $R0
+  IntOp $R0 $R0 & ${SF_SELECTED}
+  IntCmp $R0 ${SF_SELECTED} "" localPZH noPZH
+	
+	localPZH:
+	
+	; Create PZP service with dependency on PZH service.
+	nsSCM::Install /NOUNLOAD "webinos_pzp" "webinos pzp" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "webinos_pzh" "" ""
+	Goto afterPZH
+
+	noPZH:
+	
+	; Create PZP service with no dependency.
 	nsSCM::Install /NOUNLOAD "webinos_pzp" "webinos pzp" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
 
+	afterPZH:
 	CreateDirectory $APPDATA\webinos\wrt
 	${StrRep} $1 $INSTDIR\bin "\" "\\"
 	${StrRep} $2 $INSTDIR "\" "\\"
