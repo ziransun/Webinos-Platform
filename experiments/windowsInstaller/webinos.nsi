@@ -29,6 +29,8 @@ SetCompressor lzma
 !include "RegistryMacros.nsi"  
 ; Various functions and macros used in the installer
 !include "HelperFunctions.nsi"  
+; File association management
+!include "FileAssociation.nsh"
 
 ; !define GEN "${SRCROOT}\dist"
 ; !define BIN "${GEN}\bin"
