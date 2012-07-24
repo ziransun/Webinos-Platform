@@ -31,6 +31,9 @@
 		app.get('/', apps.installed);
 		app.get('/install/:id', apps.install);
 		app.get('/uninstall/:id', apps.uninstall);
+		app.get('/widget/:id', apps.boot);
+		app.get('/widget/:id/*', apps.run);
+		app.get('/sideLoad/:id', apps.sideLoad);
 
 		// store routing
 		app.get('/store', store.list);
@@ -44,7 +47,7 @@
 		app.get('/tests', function (req, res) {
 			res.render('tests', { pageTitle: 'tests' });
 		});
-
+		
 		// Write port to config file on successful connection
 		app.on('listening', function () {
 			log.info('server started on port ' + runtimeServerPort);

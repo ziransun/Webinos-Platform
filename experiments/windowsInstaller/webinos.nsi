@@ -292,6 +292,13 @@ SectionIn RO
   SetShellVarContext all
   SetOverwrite on
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+
+	WriteRegStr HKCR ".wgt" "" "W3C.widget"
+	WriteRegStr HKCR "W3C.widget" "" "W3C widget"
+	WriteRegStr HKCR "W3C.widget\DefaultIcon" "" '"$INSTDIR\bin\wrt\webinosBrowser.exe",-108'
+	WriteRegStr HKCR "W3C.widget\shell\open\command" "" '"$INSTDIR\bin\wrt\webinosBrowser.exe" --webinos-side-load "%1"'
+			
+	;${RegisterExtension} "$INSTDIR\bin\wrt\webinosBrowser.exe" ".wgt" "W3C.widget"
 	
 SectionEnd
 
@@ -567,5 +574,7 @@ Section "Uninstall"
 
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZH"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}PZP"
+
+	${UnRegisterExtension} ".wgt" "W3C widget"
     
 SectionEnd
