@@ -37,9 +37,7 @@ var webinos       = require("webinos")(__dirname);
 var session       = require("./session");
 var log           = new session.common.debug("pzp_session");
 var global        = session.configuration
-var rpc           = webinos.global.require(webinos.global.rpc.location);
-var Registry      = webinos.global.require(webinos.global.rpc.location, "lib/registry").Registry;
-var Discovery     = webinos.global.require(webinos.global.api.service_discovery.location, "lib/rpc_servicedisco").Service;
+var rpc           = webinos.global.require(webinos.global.rpc.location, "lib/rpc");
 
 var MessageHandler = webinos.global.require(webinos.global.manager.messaging.location, "lib/messagehandler").MessageHandler;
 var RPCHandler     = rpc.RPCHandler;
@@ -233,7 +231,7 @@ Pzp.prototype.authenticated = function(cn, instance, callback) {
     var msg = self.messageHandler.registerSender(self.sessionId, self.config.pzhId);
     self.sendMessage(msg, self.config.pzhId);
 
-    var localServices = self.discovery.getRegisteredServices();
+    var localServices = self.rpcHandler.getRegisteredServices();
     self.prepMsg(self.sessionId, self.config.pzhId, "registerServices", localServices);
     log.info("sent msg to register local services with pzh");
     if (self.pzptlsServerState !== global.states[2]) {
@@ -402,7 +400,7 @@ Pzp.prototype.connect = function (conn_key, conn_csr, code, callback) {
             case "windows_nt":
               break;
             }
-			//end - zeroconf
+            //end - zeroconf
           }       
      
             // Special case if started in hub disconnected mode
@@ -410,16 +408,16 @@ Pzp.prototype.connect = function (conn_key, conn_csr, code, callback) {
             pzpWebSocket.startPzpWebSocketServer(self, self.inputConfig, function() {
               self.rpcHandler.setSessionId(self.sessionId);
               setupMessageHandler(self);
-	      self.update(callback);
+              self.update(callback);
             });
           }
           if(self.pzptlsServerState === global.states[0])
           {
-		    log.info("Zeroconf: calling start pzptlsServer");	
-		    var server = new pzpServer(); 
-		    server.startServer(self, function() {
-		    self.pzptlsServerState = global.states[2];
-		  });
+            log.info("Zeroconf: calling start pzptlsServer");	
+            var server = new pzpServer(); 
+            server.startServer(self, function() {
+            self.pzptlsServerState = global.states[2];
+          });
         }  
       } else {
             self.mode = global.modes[1];
@@ -520,6 +518,8 @@ Pzp.prototype.processMsg = function(msgObj, callback) {
     } else if(validMsgObj.type === 'prop' && validMsgObj.payload.status === 'foundServices') {
       log.info('received message about available remote services.');
       this.serviceListener && this.serviceListener(validMsgObj.payload);
+    } else if(validMsgObj.type === 'prop' && validMsgObj.payload.status === 'makeFriend') {
+      
     }
     // Forward message to message handler
     else {
@@ -530,14 +530,11 @@ Pzp.prototype.processMsg = function(msgObj, callback) {
 
 Pzp.prototype.initializePzp = function(config, modules, callback) {
   var self = this;
-  self.registry       = new Registry();
-  self.rpcHandler     = new RPCHandler(this, self.registry); // Handler for remote method calls.
-  self.discovery      = new Discovery(self.rpcHandler, [self.registry]);
-  self.registry.registerObject(self.discovery);
-  self.registry.loadModules(modules, self.rpcHandler); // load specified modules
+  self.rpcHandler     = new RPCHandler(this); // Handler for remote method calls.
   self.messageHandler = new MessageHandler(this.rpcHandler); // handler for all things message
   self.modules        = modules;
   self.inputConfig    = config;
+  self.rpcHandler.loadModules(modules);// load specified modules
   
   
   global.createDirectoryStructure( function() {
@@ -551,8 +548,6 @@ Pzp.prototype.initializePzp = function(config, modules, callback) {
           callback("undefined");
         } 
       } 
-      
-      
       self.config = configure;
 
       if (self.mode === global.modes[0]) { //Virgin

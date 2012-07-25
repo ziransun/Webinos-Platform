@@ -53,9 +53,12 @@ var TestModule = function(rpcHandler, params) {
 	this.listenAttr.listenFor42 = function(params, successCB, errorCB, objectRef){
 		console.log("listenerFor42 was invoked");
 		
-		// use RPC to deliver result
-		var rpc = rpcHandler.createRPC(objectRef, 'onEvent', {msg: "42"});
-		rpcHandler.executeRPC(rpc);
+		// call the registered listener twice, delivering an object
+		for (var i=0; i<2; i++) {
+			// use RPC to deliver result
+			var rpc = rpcHandler.createRPC(objectRef, 'onEvent', {msg:i + " 42"});
+			rpcHandler.executeRPC(rpc);
+		}
 	};
 }
 

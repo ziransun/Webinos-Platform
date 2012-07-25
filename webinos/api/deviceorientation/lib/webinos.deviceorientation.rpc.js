@@ -17,9 +17,8 @@
 ******************************************************************************/
 (function() {
 
-function DeviceOrientationModule(rpcHandler, params) {
+function DeviceOrientationModule(rpcHandler) {
     var car, implFile = 'fake';
-    var connector = params.connector;
     if(connector == 'most'){
         try{
             var vehicleSystem = require('../../vehicle/contrib/vb-con/vc.js');

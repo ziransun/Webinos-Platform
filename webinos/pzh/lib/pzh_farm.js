@@ -25,10 +25,10 @@ var path        = require("path");
 var util        = require("util");
 var fs          = require("fs");
 
-var webinos = require("webinos")(__dirname);
-var session = webinos.global.require(webinos.global.pzp.location, "lib/session");
-var log     = new session.common.debug("pzh_farm");
-var pzh     = require("./pzh_sessionHandling.js");
+var webinos     = require("webinos")(__dirname);
+var session     = webinos.global.require(webinos.global.pzp.location, "lib/session");
+var log         = new session.common.debug("pzh_farm");
+var pzh_session = require("./pzh_sessionHandling.js");
 
 var farm = exports;
 
@@ -42,11 +42,12 @@ function loadPzhs(config) {
   var myKey;
   for ( myKey in config.pzhs) {
     if(typeof config.pzhs[myKey] !== "undefined") {
-      pzh.addPzh(myKey, config.pzhs[myKey], function(res, instance) {
+      farm.pzhs[myKey] = new pzh_session();
+      farm.pzhs[myKey].addPzh(myKey, config.pzhs[myKey], function(res, instance) {
         if (res) {
-          log.info("started PZH ... " + instance.config.name);
+          log.info("started pzh ... " + instance.config.name);
         } else {
-          log.error("failed started PZH ... ");
+          log.error("failed starting pzh ... ");
         }
       });
     }
@@ -112,7 +113,7 @@ farm.startFarm = function (url, name, callback) {
                 var removed = session.common.removeClient(cl, conn);
                 if (removed !== null && typeof removed !== "undefined"){
                   cl.messageHandler.removeRoute(removed, conn.servername);
-                  cl.discovery.removeRemoteServiceObjects(removed);
+                  cl.rpcHandler.removeRemoteServiceObjects(removed);
                 }
               }
             } catch (err) {
@@ -124,7 +125,10 @@ farm.startFarm = function (url, name, callback) {
             log.error("("+conn.servername+") General Error" + err);
           });
         });
-
+        farm.server.on("error", function(error) {
+          log.error(error);
+        });
+        
         farm.server.on("listening", function(){
           log.info("initialized at " + resolvedAddress);
           // Load PZH"s that we already have registered ...
@@ -174,13 +178,16 @@ farm.getOrCreatePzhInstance = function (host, user, callback) {
   } else {
     log.info("adding new PZH - " + myKey);
     var pzhModules = session.configuration.pzhDefaultServices;
-    pzh.addPzh(myKey, pzhModules, function(status){
+    farm.pzhs[myKey] = new pzh_session();
+    farm.pzhs[myKey].addPzh(myKey, pzhModules, function(status){
       if (status) {
         farm.pzhs[myKey].config.name     = name;
         farm.pzhs[myKey].config.email    = user.email;
         farm.pzhs[myKey].config.country  = user.country;
         farm.pzhs[myKey].config.image    = user.image;
-        session.configuration.storeConfig(farm.pzhs[myKey].config, function() {
+        farm.config.pzhs[myKey]          = pzhModules;
+        
+        session.configuration.storeConfig(farm.config, function() {
           callback(myKey, farm.pzhs[myKey]);
         });
       } else {
@@ -189,4 +196,8 @@ farm.getOrCreatePzhInstance = function (host, user, callback) {
     });
   }
 };
+
+process.on("uncaughtException", function(err) {
+	log.error("uncaught exception " + err);
+});
 

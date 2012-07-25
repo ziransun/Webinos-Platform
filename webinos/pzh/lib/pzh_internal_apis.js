@@ -35,7 +35,7 @@ var webinos = require("webinos")(__dirname);
 var session = webinos.global.require(webinos.global.pzp.location, "lib/session");
 var qrcode  = require("./pzh_qrcode.js");
 var revoke  = require("./pzh_revoke.js");
-var connect = require("./pzh_connecting.js");
+
 var farm    = require("./pzh_farm.js");
 
 var pzh_internal_apis = exports;
@@ -154,58 +154,21 @@ pzh_internal_apis.revoke = function(instance, pzpid, callback) {
 
 // This is sending side action on PZH end
 pzh_internal_apis.addPzhCertificate = function(instance, to, callback) {
-  "use strict";
-  var id, id_to, pzh_id;
-  if (instance.config.serverName) {
-      id = instance.config.serverName.split("/")[0];
-  }
-  if (to) {
-      id_to = to.split("/")[0];
-  }
-
-  // There are two scenarios:
-  // 1. Inside same PZH Farm, it is a mere copy.
-  if (id === id_to) {
-    for (var myKey in farm.pzhs) {
-      if( typeof farm.pzhs[myKey] !== "undefined" && myKey=== to) {
-
-        // Store the information in other_cert
-        instance.config.otherCert[to] = { cert: farm.pzhs[to].config.master.cert, crl: farm.pzhs[to].config.master.crl};
-        farm.pzhs[to].config.otherCert[instance.config.serverName] = { cert: instance.config.master.cert, crl: instance.config.master.crl }
-
-        // Add in particular context of each PZH options
-        instance.options.ca.push(instance.config.otherCert[myKey].cert);
-        instance.options.crl.push(instance.config.otherCert[myKey].crl);
-
-        farm.pzhs[to].options.ca.push(instance.config.master.cert);
-        farm.pzhs[to].options.crl.push(instance.config.master.crl);
-
-        farm.server._contexts.some(function(elem) {
-          if (to.match(elem[0]) !== null) {
-            elem[1] = crypto.createCredentials(farm.pzhs[to].options).context;
-          }
-
-          if (instance.config.serverName.match(elem[0]) !== null) {
-            elem[1] =  crypto.createCredentials(instance.options).context;
-          }
-        });
-
-          // pzh.serverContext.pair.credentials.context.addCACert(pzh.config.other_cert[i]);
-          // Store configuration
-        session.configuration.storeConfig(instance.config, function() {
-          session.configuration.storeConfig(farm.pzhs[to].config, function(){
-            connect.connectOtherPZH(instance, to, callback);
-          });
-        });
-      }
+  /*if (to && to.split('/')) {
+    if (instance.config.otherCert[to]) {
+      callback("already connected");
+    } else {
+      var pzh_connecting = require('./pzh_connecting.js');
+      var pzhConnect = new pzh_connecting(instance);
+      pzhConnect.sendCertificate(to, callback); 
     }
-  }
-  // TODO:2. Outside farm, this will involve https.request going out.
-  else {
-    var payload = instance.prepMsg(instance.sessionId, to, "receiveMasterCert", instance.config.master.cert);
-    callback(true);
-  }
-
+  } else {
+    callback("connecting address is wrong");
+  }*/
+  
+  var pzh_connecting = require('./pzh_connecting.js');
+      var pzhConnect = new pzh_connecting(instance);
+      pzhConnect.sendCertificate(to, callback); 
 };
 
 pzh_internal_apis.restartPzh = function(instance, callback) {

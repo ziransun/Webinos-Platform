@@ -44,14 +44,6 @@ WebinosGeolocation.prototype.bindService = function (bindCB, serviceId) {
 	};
 }
 
-// converts ms since epoch to Date object, helper method
-function msSinceEpochToDate(position) {
-	if (position && position.timestamp) {
-		position.timestamp = new Date(position.timestamp);
-		return position;
-	}
-}
-
 /**
  * Retrieve the current position.
  * @param positionCB Success callback.
@@ -61,7 +53,7 @@ function msSinceEpochToDate(position) {
 function getCurrentPosition(positionCB, positionErrorCB, positionOptions) { 
 	var rpc = webinos.rpcHandler.createRPC(this, "getCurrentPosition", positionOptions); // RPC service name, function, position options
 	webinos.rpcHandler.executeRPC(rpc, function (position) {
-		positionCB(msSinceEpochToDate(position));
+		positionCB(position); 
 	},
 	function (error) {
 		positionErrorCB(error);
@@ -76,16 +68,20 @@ function getCurrentPosition(positionCB, positionErrorCB, positionOptions) {
  * @returns Registered listener id.
  */
 function watchPosition(positionCB, positionErrorCB, positionOptions) {
-	var rpc = webinos.rpcHandler.createRPC(this, "watchPosition", [positionOptions]);
+	var watchIdKey = Math.floor(Math.random()*101);
 
-	rpc.onEvent = function (position) {
-		positionCB(msSinceEpochToDate(position));
+	var rpc = webinos.rpcHandler.createRPC(this, "watchPosition", [positionOptions, watchIdKey]);
+	rpc.fromObjectRef = Math.floor(Math.random()*101); //random object ID	
+
+	var callback = new RPCWebinosService({api:rpc.fromObjectRef});
+	callback.onEvent = function (position) {
+		positionCB(position); 
 	};
+	webinos.rpcHandler.registerCallbackObject(callback);
 
-	webinos.rpcHandler.registerCallbackObject(rpc);
 	webinos.rpcHandler.executeRPC(rpc);
 
-	return parseInt(rpc.fromObjectRef, 16);
+	return watchIdKey;
 };
 
 /**
@@ -93,12 +89,8 @@ function watchPosition(positionCB, positionErrorCB, positionOptions) {
  * @param watchId The id as returned by watchPosition to clear.
  */
 function clearWatch(watchId) {
-	var watchIdStr = (watchId).toString(16);
-
-	var rpc = webinos.rpcHandler.createRPC(this, "clearWatch", [watchIdStr]);
-	webinos.rpcHandler.executeRPC(rpc);
-
-	webinos.rpcHandler.unregisterCallbackObject({api:watchIdStr});
+	var rpc = webinos.rpcHandler.createRPC(this, "clearWatch", [watchId]); 
+	webinos.rpcHandler.executeRPC(rpc, function() {}, function() {});
 };
 
 })();

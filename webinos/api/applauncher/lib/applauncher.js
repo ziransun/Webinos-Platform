@@ -13,17 +13,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 * 
-* Copyright 2012 AndrÃ© Paul, Fraunhofer FOKUS
+* Copyright 2012 André Paul, Fraunhofer FOKUS
 ******************************************************************************/
 (function() {
-	var exec = require('child_process').exec;
 
 	/**
 	 * Webinos AppLauncher service constructor (server side).
 	 * @constructor
 	 * @param rpcHandler A handler for functions that use RPC to deliver their result.  
 	 */
-	var WebinosAppLauncherModule = function(rpcHandler, params) {
+	var WebinosAppLauncherModule = function(rpcHandler) {
 		// inherit from RPCWebinosService
 		this.base = RPCWebinosService;
 		this.base({
@@ -31,28 +30,8 @@
 			displayName:'AppLauncher API',
 			description:'The AppLauncher API for starting applications.'
 		});
-
-		this.browserExecPath = undefined;
-		if (params.browserExecPath) {
-			this.browserExecPath = params.browserExecPath;
-
-		} else {
-			var that = this;
-			if (process.platform === 'win32') {
-				exec('reg query HKCR\\http\\shell\\open\\command -ve', function(err, stdout, stderr) {
-					if (err) return;
-
-					that.browserExecPath = stdout.split('\r\n')[2].split('    ')[3];
-					if (/--/.test(that.browserExecPath)) {
-						that.browserExecPath = that.browserExecPath.split('--')[0];
-					}
-				});
-			} else if (process.platform === 'linux') {
-				this.browserExecPath = 'xdg-open';
-			}
-		}
 	};
-
+	
 	WebinosAppLauncherModule.prototype = new RPCWebinosService;
 
 	/**
@@ -65,28 +44,32 @@
 	WebinosAppLauncherModule.prototype.launchApplication = function (params, successCB, errorCB, objectRef){
 		console.log("launchApplication was invoked. AppID: " +  params.applicationID + " Parameters: " + params.params);
 		
-		if (!/^http[s]?:\/{2}/.test(params.applicationID) || !this.browserExecPath) {
-			console.log("applauncher: only http[s] AppIds are allowed or no browser available.");
-			if (typeof errorCB === "function") {
-				errorCB();
+		var startUpLine = params.applicationID;
+		
+		var i;
+		if (typeof params.params !== 'undefined'){
+			for (i = 0; i < params.params.length; i++){
+				startUpLine = startUpLine + " " + params.params[i];
 			}
-			return;
 		}
 		
-		var cmdLine = this.browserExecPath.concat(' ', params.applicationID);
-		console.log("AppLauncher trying to launch: " + cmdLine);
+		console.log("AppLauncher trying to launch: " + startUpLine);
 		
-		exec(cmdLine, function(error, stdout, stderr){
-			console.log("Result: " + error + " " + stdout + " " + stderr);
-
-			if (error && typeof errorCB === "function") {
-				errorCB();
-				return;
-			}
-
-			successCB();
+		var exec = require('child_process').exec;
+		exec(startUpLine, function callback(error, stdout, stderr){
+		    console.log("Result: " + error + " " + stdout + " " + stderr);
+		    
+		    if (error != null){
+		    	errorCB();
+		    }
+		    else {
+		    	successCB();
+		    } 
+		    	
 		});
+		
 	};
+
 	
 	/**
 	 * Determine whether an app is available.
@@ -95,8 +78,8 @@
 	 */
 	WebinosAppLauncherModule.prototype.appInstalled = function (params, successCB, errorCB, objectRef){
 		console.log("appInstalled was invoked");
-		errorCB();
 	};
+
 
 	exports.Service = WebinosAppLauncherModule;
 

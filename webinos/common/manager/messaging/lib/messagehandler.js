@@ -256,6 +256,23 @@
 						console.log("MSGHANDLER:  forwardto", forwardto);
 					}
 				}
+         if (forwardto === data[0]) {
+            var s1 = [forwardto, this.self];
+            s1.join("->");
+            var s2 = [this.self, forwardto];
+            s2.join("->");
+            if (this.clients[s1] || this.clients[s2]) 
+              forwardto = data[0];
+            else
+            {  
+              
+            var own_addr = this.self.split(this.separator);
+            var own_pzh = own_addr[0]
+            if (forwardto !== own_pzh) {
+              forwardto = own_pzh;
+            }
+          }
+          }
 				this.sendMsg(message, forwardto, this.objectRef);
 			}
 		    else if (this.clients[session2]) {
@@ -343,6 +360,26 @@
 							forwardto = id;
 						}
 					}
+          
+          
+          if (forwardto === data[0]) {
+            var s1 = [forwardto, this.self];
+            s1.join("->");
+            var s2 = [this.self, forwardto];
+            s2.join("->");
+            if (this.clients[s1] || this.clients[s2]) 
+              forwardto = data[0];
+            else
+            {  
+              
+            var own_addr = this.self.split(this.separator);
+            var own_pzh = own_addr[0]
+            if (forwardto !== own_pzh) {
+              forwardto = own_pzh;
+            }
+          }
+          }
+          console.log("message forward to:" + forwardto);
 
 					this.sendMsg(message, forwardto, this.objectRef);
 				}

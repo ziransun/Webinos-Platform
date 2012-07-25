@@ -61,17 +61,16 @@ function getCurrentPosition (params, successCB, errorCB, objectRef){
 			}
 
 			var coords = new Object;
-			coords.accuracy = 1000;
-			if (params && params.enableHighAccuracy) {
-				coords.accuracy = 1;
+			if (params) {
+				if (params.enableHighAccuracy) coords.accuracy = 1; else coords.accuracy = null; // simply reflect input for debugging
 			}
 			coords.altitude = counter++;
 			coords.altitudeAccuracy = null;
 			coords.heading = null;
 			coords.speed = Math.floor(Math.random()*1000)/10;
 			if (geoip) {
-				if (geoip.latitude) coords.latitude = parseFloat(geoip.latitude); else coords.latitude = null;
-				if (geoip.longitude) coords.longitude = parseFloat(geoip.longitude); else coords.longitude = null;
+				if (geoip.latitude) coords.latitude = geoip.latitude; else coords.latitude = null; 
+				if (geoip.longitude) coords.longitude = geoip.longitude; else coords.longitude = null; 
 			}	
 			var position = new Object;
 			position.coords=coords;
@@ -103,7 +102,7 @@ function getCurrentPosition (params, successCB, errorCB, objectRef){
 function watchPosition (args, successCB, errorCB, objectRef) {
     var tint = 2000;
 	var params = args[0];
-	if (params && params.maximumAge) tint = params.maximumAge;
+	if (params.maximumAge) tint = params.maximumAge;
 	
 	function getPos() {
 		// call getCurrentPosition and pass back the position
@@ -118,7 +117,8 @@ function watchPosition (args, successCB, errorCB, objectRef) {
 
 	var watchId = setInterval(function() {getPos(); }, tint);
 	
-	watchIdTable[objectRef] = watchId;
+	var watchIdKey = args[1];
+	watchIdTable[watchIdKey] = watchId;
 }
 
 /**

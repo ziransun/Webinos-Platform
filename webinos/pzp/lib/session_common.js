@@ -39,20 +39,30 @@ var validation   = require("./session_schema");
 
 session_common.debug = function(id) {
     this.store_id = id;
+    this.sessionId;
 };
 
+session_common.debug.prototype.addId = function(id) {
+  this.sessionId = id;
+}
 session_common.debug.prototype.error = function(msg) {
-  cursor.fg.red().write('error ')
-    .fg.cyan().write(this.store_id)
-    .fg.red().write(' ' + msg + '\n')
-    .reset();
+  cursor.bg.grey();
+  cursor.fg.red().write('error ');
+  cursor.fg.cyan().write(this.store_id);
+  if (typeof this.sessionId !== "undefined") 
+    cursor.fg.green().write(' ' + this.sessionId);
+  cursor.fg.red().write(' ' + msg + '\n');
+  cursor.reset();
 }; 
 
 session_common.debug.prototype.info = function(msg) {
-  cursor.fg.blue().write('info ')
-    .fg.cyan().write(this.store_id)
-    .fg.white().write(' ' + msg + '\n')
-    .reset();
+  cursor.bg.grey();
+  cursor.fg.white().write('info ');
+  cursor.fg.cyan().write(this.store_id);
+  if (typeof this.sessionId !== "undefined") 
+    cursor.fg.green().write(' ' + this.sessionId);
+  cursor.fg.white().write(' ' + msg + '\n')
+  cursor.reset();
 };
 
 /*session_common.debugPzh = function(id, type, msg) {
@@ -155,13 +165,11 @@ session_common.readJson = function(instance, buffer, objectHandler) {
   var offset = 0;
   
   for (;;) {
-    var readByteLen;
     if (instanceMap[instance]) {
       // we already read from a previous buffer, read the rest
       len = instanceMap[instance].restLen;
-      var jsonStrTmp = buffer.toString('utf8', offset, offset + len);
-      readByteLen = Buffer.byteLength(jsonStrTmp, 'utf8');
-      jsonStr = instanceMap[instance].part + jsonStrTmp;
+      jsonStr = instanceMap[instance].part;
+      jsonStr += buffer.toString('utf8', offset, offset + len);
       offset += len;
       instanceMap[instance] = undefined;
       
@@ -169,10 +177,10 @@ session_common.readJson = function(instance, buffer, objectHandler) {
       len = buffer.readUInt32LE(offset);
       offset += 4;
       jsonStr = buffer.toString('utf8', offset, offset + len);
-      readByteLen = Buffer.byteLength(jsonStr, 'utf8');
       offset += len;
     }
 
+    var readByteLen = Buffer.byteLength(jsonStr, 'utf8');
     if (readByteLen < len) {
       instanceMap[instance] = {
           restLen: len - readByteLen,

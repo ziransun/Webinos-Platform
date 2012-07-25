@@ -5,7 +5,7 @@ var fs = require('fs');
 var path = require('path');
 var prefix;
 var cmd = process.argv[2];
-var prefixPath = process.argv[4];
+var prefixPath = process.argv[3];
 var nPathV = parseFloat(process.versions.node);
 if (nPathV >= 0.7) { nPathV = fs;} else { nPathV = path;}
 
@@ -102,10 +102,6 @@ if (cmd === "install") {
       });
     }
   });
-} else if (cmd === "wrt") {
-    list.push("java -jar ./tools/closure-compiler/compiler.jar --compilation_level WHITESPACE_ONLY --warning_level VERBOSE "+ fileList +" --js_output_file ./webinos/test/client/webinos.js");
-
-    exec(list);
 } else {
   list.push("rm -rf " + prefix+ "/bin/webinos_pzh");
   list.push("rm -rf " + prefix+ "/bin/webinos_pzp");

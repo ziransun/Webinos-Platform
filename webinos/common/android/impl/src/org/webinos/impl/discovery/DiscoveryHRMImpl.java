@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Copyright 2012 Samsung Electronics(UK) Ltd
+* Copyright 2012 Ziran Sun, Samsung Electronics(UK) Ltd
 * 
 ******************************************************************************/
 
@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.ArrayList;
 import android.util.Log;
 
-import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -49,10 +48,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 
 public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 	
@@ -74,7 +70,7 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
     private String mHxMName = null;
     private String mHxMAddress = null;
     
-    private ConnectedThread mConnectedThread;
+    private ConnectedThread mConnectedThread = null;
     
 	/*****************************
 	 * DiscoveryManager methods
@@ -206,7 +202,6 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 		private Options options;
 		private Filter filter;
 		
-		private DiscoveryReceiver mReceiver;
 		private boolean stopped;
 		
 		private BluetoothFindService(ServiceType srvType,
@@ -218,8 +213,7 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 		    options = opts;
 		    filter = fltr;
 			
-		    stopped = false;
-			mReceiver = new DiscoveryReceiver(serviceType, findCallback, this);
+			stopped = false;
 			if(D) Log.v(TAG,"constructed BluetoothFindService");
 		}
 		
@@ -232,145 +226,82 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 		}
 			
 		public void run() {
-		// If we're already discovering, stop it
-        if (mBluetoothAdapter.isDiscovering()) 
-        	mBluetoothAdapter.cancelDiscovery(); 
-        
-        // Request discover from BluetoothAdapter
-        mBluetoothAdapter.startDiscovery();
+		//Simply connect to the HRM device
+		Log.d(TAG, "Connecting to HRM");
+	    //get the list of bonded devices
+		Set<BluetoothDevice> devicesPaired = mBluetoothAdapter.getBondedDevices();
+		if (devicesPaired.isEmpty() && devicesAvailable.isEmpty())
+		Log.e(TAG, "No bluetooth device is available");
+		//TODO: check if HRM is paired
+		else{
+			//Assume that HXM device is paired
+    	  	if(!devicesPaired.isEmpty())
+    	  	{
+					for (BluetoothDevice device : devicesPaired) {
+						String deviceName = device.getName();
+						if ( deviceName.startsWith("HXM") ) {
+							/*
+							 * we found an HxM to try to talk to!, let's remember its name and 
+							 * stop looking for more
+							 */
+							mHxMAddress = device.getAddress();
+							mHxMName = device.getName();
+							Log.d(TAG,"getConnectedHxm() found a device whose name starts with 'HXM', its name is "+mHxMName+" and its address is ++mHxMAddress");
+													
+							// start connecting to Hxm
+							BluetoothSocket tmp = null;
+							try {
+								Method m = device.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
+								tmp = (BluetoothSocket) m.invoke(device, 1);            	            	
+							}catch (SecurityException e) {
+									Log.e(TAG, "ConnectThread() SecurityException");
+									e.printStackTrace();
+							} catch (NoSuchMethodException e) {
+									Log.e(TAG, "ConnectThread() SecurityException");
+									e.printStackTrace();
+							} catch (IllegalArgumentException e) {
+									Log.e(TAG, "ConnectThread() SecurityException");
+									e.printStackTrace();
+							} catch (IllegalAccessException e) {
+									Log.e(TAG, "ConnectThread() SecurityException");
+									e.printStackTrace();
+							} catch (InvocationTargetException e) {
+									Log.e(TAG, "ConnectThread() SecurityException");
+									e.printStackTrace();
+							}
+							mmSocket = tmp;
+															 
+							try {
+								// This is a blocking call and will only return on a successful connection or an exception
+								mmSocket.connect();
+								
+							} catch (IOException e) {
+								//inform widget that socket is not connected
+								long[] values = {1000, 0 , 0, 0, 0, 0};
+								srv.values = values;
+								findCallback.onFound(srv);
+								Log.d(TAG, "END connectionFailed");
+								// Close the socket
+								try {
+									mmSocket.close();
+								} catch (IOException e2) {
+									Log.e(TAG, "ConnectThread.run(): unable to close() socket during connection failure", e2);
+								}
+							}
+						//	srv.api = serviceType.api;
 
-        if(stopped)
-        	return;
-        
-        IntentFilter ifilter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        androidContext.registerReceiver(mReceiver, ifilter);
-        
-		}
-		public void discoveryFinished() {
-			System.out.println("discoveryfinished");
-			
-			if (mBluetoothAdapter != null) {
-				mBluetoothAdapter.cancelDiscovery();
-	        }
-			androidContext.unregisterReceiver(mReceiver);
-	   }
- 	}
-	 
- 	class DiscoveryReceiver extends BroadcastReceiver {
-		private ServiceType serviceType;
-		private FindCallback findCallback;  
-		BluetoothFindService bluetoothFindService;
-		
-					
-       @Override
-       public void onReceive(Context context, Intent intent) {
-    	   
-    	   if(bluetoothFindService.isStopped()) {
-				Log.v(TAG, "DiscoveryReceiver onReceive - stopped");
-				return;
-			}
-           String action = intent.getAction();
-           
-           // Skip further discovery process
-           if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-           
-				//unregister receiver
-				bluetoothFindService.discoveryFinished();
-
-   			switch(getResultCode()) {
-				case Activity.RESULT_OK:
-					Log.d(TAG, "discovery Okay" +getResultCode());
-			       	//get the list of bonded devices
-		        	   Set<BluetoothDevice> devicesPaired = mBluetoothAdapter.getBondedDevices();
-		        	   if (devicesPaired.isEmpty() && devicesAvailable.isEmpty())
-		        		   Log.e(TAG, "No bluetooth device is available");
-		        	   else{
-		        		   //Assume that HXM device is paired
-		        		   if(!devicesPaired.isEmpty())
-		        		   {
-		        			   for (BluetoothDevice device : devicesPaired) {
-		        		        	String deviceName = device.getName();
-		        		        	if ( deviceName.startsWith("HXM") ) {
-		        		        		/*
-		        		        		 * we found an HxM to try to talk to!, let's remember its name and 
-		        		        		 * stop looking for more
-		        		        		 */
-		        		        		mHxMAddress = device.getAddress();
-		        		        		mHxMName = device.getName();
-		        		        		Log.d(TAG,"getConnectedHxm() found a device whose name starts with 'HXM', its name is "+mHxMName+" and its address is ++mHxMAddress");
-		        		        		
-		        		        		// start connecting to Hxm
-		        		        		BluetoothSocket tmp = null;
-		        		        		try {
-		        		        			Method m = device.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
-		        		     			    tmp = (BluetoothSocket) m.invoke(device, 1);            	            	
-		        		     			}catch (SecurityException e) {
-		        		     		        Log.e(TAG, "ConnectThread() SecurityException");
-		        		     		        e.printStackTrace();
-		        		     			} catch (NoSuchMethodException e) {
-		        		     		        Log.e(TAG, "ConnectThread() SecurityException");
-		        		     		        e.printStackTrace();
-		        		     			} catch (IllegalArgumentException e) {
-		        		     		        Log.e(TAG, "ConnectThread() SecurityException");
-		        		     		        e.printStackTrace();
-		        		     			} catch (IllegalAccessException e) {
-		        		     		        Log.e(TAG, "ConnectThread() SecurityException");
-		        		     		        e.printStackTrace();
-		        		     			} catch (InvocationTargetException e) {
-		        		     		        Log.e(TAG, "ConnectThread() SecurityException");
-		        		     		        e.printStackTrace();
-		        		     			}
-		        		     			
-		        		                mmSocket = tmp;
-		        		                 
-										try {
-											 // This is a blocking call and will only return on a successful connection or an exception
-											 mmSocket.connect();
-										} catch (IOException e) {
-										   	  //Make up a ridiculous high pulse rate to inform widget that socket is not connected
-										   	  long[] values = {1000, 0 , 0, 0, 0, 0};
-                  							  srv.values = values;
-										   	  findCallback.onFound(srv);
-											  Log.d(TAG, "END connectionFailed");
-										     // Close the socket
-										     try {
-										         mmSocket.close();
-										     } catch (IOException e2) {
-										         Log.e(TAG, "ConnectThread.run(): unable to close() socket during connection failure", e2);
-										  }
-										 }
-										 srv.api = serviceType.api;
-										 
-										 // Cancel any thread currently running a connection
-									        if (mConnectedThread != null) {
-									        	mConnectedThread.cancel(); mConnectedThread = null;
-									        }
-										 mConnectedThread = new ConnectedThread(mmSocket, findCallback);
-									     mConnectedThread.start();
-									     
-		        		        	}
-		        		        }
-		        		   }
-		        	   }
-	       	break;
-			default:
-					Log.d(TAG, "discovery failed" +getResultCode());
-				//	findCallback.onError(new DiscoveryError());
-					break;
+							// Cancel any thread currently running a connection
+							if (mConnectedThread != null) {
+								mConnectedThread.cancel(); mConnectedThread = null;
+							}
+							mConnectedThread = new ConnectedThread(mmSocket, findCallback);
+							mConnectedThread.start(); 
+						}
+					}	
 				}
-	       }
-	    }
-       
-       //end of getdata thread
-       
-       private DiscoveryReceiver(ServiceType srvType,
-				FindCallback findCB,
-				BluetoothFindService btFnd) {
-			serviceType = srvType;
-			findCallback = findCB;
-			bluetoothFindService = btFnd;
-		} 
-   };
+			}
+		}  //end of run
+	} // end of runnable  	  
    
    /*
     * This thread runs during a connection with the Hxm.
@@ -477,14 +408,19 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 
        }
 
-       public void cancel() {
-           try {
-               mmSocket.close();
-           } catch (IOException e) {
-               Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
-           }
-       }
-   }
+       public void cancel()	{
+    	        Log.e(TAG, "cancel connection");
+				try {
+					mmInStream.close();} catch (IOException e) {
+					Log.e(TAG, "ConnectedThread.cancel(): close() of InputStream failed", e);
+				}
+				try {
+					mmSocket.close();
+				} catch (IOException e) {
+					Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
+				}
+			}
+		}
    
  //start of HrmReading    
    public class HrmReading implements Dictionary {

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+	<head>
+		<meta charset="utf-8"/>
+		<title>Webinos Cardio Hills Remote Sensor Prototype</title>
+		<link rel="stylesheet" href="css//hrm.css">
+		<script type="text/javascript" src="jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="js/jquery.equalHeight.js"></script>
+		<script type="text/javascript" src="hrm.js"></script>
+		<script type="text/javascript" src="../../webinos.js"></script> 
+	</head>
+	<body>	
+		<header id="header">
+		<hgroup>
+		   <center><div id="header"> <h1><img src="testbed_logo.png"></h1> </div></center>
+		</hgroup>
+	</header>
+
+	
+		<aside id="sidebar" class="column">
+			<div>
+			
+			<p>Use "Find Patients and devices" to search for Patients and their devices.
+			</p>
+			<br />
+			
+			<button id="findService" class="button">Find Patients and devices</button>
+							<select id="get42Services" size="5"></select>
+				
+			<br />
+			<br />
+			<br />
+
+			<p>Choose a device above and connect.
+			</p>	
+				
+			<button id="bind" class="button">Connect Patient's device</button>
+			<br />
+			<br />
+			<br />
+				
+			<p>Press the button to monitor patients' Heart Rate.
+			</p>	
+			<button id="startHRM" class="button">StartHRM</button>
+			
+			</aside>
+
+		<section id="main" class="column">
+	
+			<center>
+			
+			
+			<div id="numbers">
+				<div id="nmbrmain"><span id="nmbrmainspan">0</span><p>BPM</p></div>
+			</div>
+			<div id="timer">
+				<a href="#" id="timerstart">Start/Pause Clock</a>
+				<div><span id="h">00</span>:<span id="m">00</span>:<span id="s">00</span>.<span id="ms">0</span></div>
+			</div>
+			
+			<div id="loader"></div>
+			<div id="graph"><img src="img/median.png" class="graphbckgr" id="pulseMed">
+				<canvas id="canvas" height="100" width="400">
+				</canvas>
+			</div>
+		
+		</section>
+
+	</body>
+	
+	<script type="text/javascript">
+	
+	 $(document).ready(function() {
+        function logMessage(msg) {
+        	if (msg) {
+                $('#message').append('<li>' + msg + '</li>');
+        	}
+        }
+
+        function fillPZAddrs(data) {
+            var pzpId = data.from;
+            var pzhId, connectedPzh , connectedPzp;
+            if (pzpId !== "virgin_pzp") {
+              pzhId = data.payload.message.pzhId;                                     
+              connectedPzp = data.payload.message.connectedPzp; // all connected pzp
+              connectedPzh = data.payload.message.connectedPzh; // all connected pzh
+              
+              logMessage('registeredBrowser msg from ' + pzpId);
+            }
+        }
+        webinos.session.addListener('registeredBrowser', fillPZAddrs);
+        
+        function updatePZAddrs(data) {
+            if(typeof data.payload.message.pzp !== "undefined") {
+                logMessage('new pzp ' + data.payload.message.pzp);
+            } else {
+                logMessage('new pzh ' + data.payload.message.pzh);
+            }
+        }
+        webinos.session.addListener('update', updatePZAddrs);
+        
+        function printInfo(data) {
+        	logMessage(data.payload.message);
+        }
+        webinos.session.addListener('info', printInfo);
+                        
+        
+        $('#disconnectPZP').bind('click', function() {
+                var options = {type: 'prop', payload: {status:'disconnectPzp'}};
+                webinos.session.message_send(options);
+        
+        });             
+        $('#registerBrowser').bind('click', function() {
+                var options = {type: 'prop', payload: {status:'registerBrowser'}};
+                webinos.session.message_send(options);                
+        });
+
+	var test = {};
+        var recentService;
+        
+        $('#findService').bind('click', function() {
+        		test = {};
+        		recentService = null;
+        		$('#get42Services').empty();
+        		
+                webinos.discovery.findServices( 
+                new ServiceType('http://webinos.org/api/discovery'),                         
+                {onFound: function (service) {
+                    test[service.serviceAddress] = service;
+                    $('#get42Services').append($('<option>' + service.serviceAddress + '</option>'));
+            }});
+        });
+        
+        $("#get42Services option").live('click', function(event) {
+        	$(this).parent().attr("recent", $(this).val());
+        });
+        
+        $('#bind').bind('click', function() {
+        	recentService = test[$('#get42Services').attr('recent')];
+        	recentService.bindService({onBind:function(service) {
+                logMessage('TEST API ' + service.api + ' bound.');
+            }});
+        });
+		
+		function onFound(service){
+		
+			document.getElementById("loader").innerHTML = "";
+				
+			console.log("onFound callback: found service."); 
+			
+			//human's maximum pulse is 220
+			if(service.values[0] > 300)
+			{
+				alert("HRM is not connected");
+				var text = document.getElementById("HRM");
+				$('#HRM').text('StartHRM');
+			}
+			else
+			{
+				nmbrmainspan = document.getElementById('nmbrmainspan');
+				nmbrmainspan.innerHTML = service.values[0];
+			}
+		}	
+		
+		$('#startHRM').bind('click', function() {
+			var servicetype = {
+				api: 0x00200000
+			} 
+			var text = document.getElementById("startHRM");
+			console.log("hrm value is:" + text.innerHTML);
+			if(text.innerHTML==="StartHRM")
+			{
+				$('#startHRM').text('StopHRM');
+				try {
+					$('#loader').html("<img src='img/ajaxloader.gif'>");
+				}
+				catch(e) {
+				console.log("startHRM - loader: "+e.message);
+				}
+				try {
+					recentService.findHRM(servicetype, onFound);				 	
+					console.log("startHRM - END");
+				}
+				catch(e) {
+				console.log("startHRM - error: "+e.message);
+				}
+
+			}	
+			else if(text.innerHTML==="StopHRM")
+			{
+				$('#HRM').text('StartHRM');
+				document.getElementById("loader").innerHTML = "";
+
+				try {
+					recentService.findHRM(servicetype);				 	
+					console.log("stopHRM - END");
+				}
+				catch(e) {
+				console.log("stopHRM - error: "+e.message);
+				}
+			}
+			
+		});
+	});
+
+	</script>
+	
+</html>
+
+
