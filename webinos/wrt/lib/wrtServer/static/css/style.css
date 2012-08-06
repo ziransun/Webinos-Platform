@@ -328,3 +328,10 @@ a:hover
 {
     background-color: Red;
 }
+
+.testSection
+{
+		background-color: #006d88;		
+		color: #9FC6D0;
+		padding: 10px;
+}

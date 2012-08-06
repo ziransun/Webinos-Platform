@@ -148,7 +148,15 @@
 			if (typeof(cfg) === "undefined") {
 			} else {
 				var startFile = cfg.startFile.path;
-				res.redirect(req.url + "/" + startFile);
+				// Support remote start locations
+				var startFileProtocol = url.parse(startFile).protocol;
+				if (typeof startFileProtocol === "undefined") {
+					// Normal widget with local start file.
+					res.redirect(req.url + "/" + startFile);
+				} else {
+					// Redirect to remote start location.
+					res.redirect(startFile);
+				}
 			}
 		};
 		

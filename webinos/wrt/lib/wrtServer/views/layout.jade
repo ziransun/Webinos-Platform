@@ -8,7 +8,8 @@ html(lang="en")
 		script(type='text/javascript')
 			$(function() {				
 				$(".page").corner("keep");
-				$(".footer").corner("bottom");						
+				$(".footer").corner("bottom");
+				$(".testSection").corner();
 				$(".storeMenuItem").click(function() { $(".content").html("<div class='widgetStoreLoading'><img src='/images/loading.gif' /></div>"); var that = this; setTimeout(function() {  window.location = "/Store"; }, 1000); return false; });
 				setTimeout(function() {$(".feedback").hide(); },5000);
 			});
