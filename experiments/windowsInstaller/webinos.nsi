@@ -39,7 +39,7 @@ SetCompressor lzma
 !define INSTALLER_BANNER "installBanner.bmp"
 
 !define PRODUCT_NAME "webinos"
-!define VERSION "0.6.3"
+!define VERSION "0.6.4"
 
 ; XP Compatibility
 !ifndef SF_SELECTED
@@ -163,14 +163,6 @@ FunctionEnd
 ;Pre-install section
 
 Section -pre
-
-SectionEnd
-
-Section "Add ${PRODUCT_NAME} local PZH" SecWebinosLocalPZH
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
-
-	; Service (auto starting)
-	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
 
 SectionEnd
 
@@ -301,6 +293,14 @@ noPZH:
 			
 	Call RefreshShellIcons
 				
+SectionEnd
+
+Section "Add ${PRODUCT_NAME} local PZH" SecWebinosLocalPZH
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
+
+	; Service (auto starting)
+	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
+
 SectionEnd
 
 /*
