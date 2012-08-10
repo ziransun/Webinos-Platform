@@ -166,6 +166,14 @@ Section -pre
 
 SectionEnd
 
+Section "Add ${PRODUCT_NAME} local PZH" SecWebinosLocalPZH
+	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
+
+	; Service (auto starting)
+	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
+
+SectionEnd
+
 Section "${PRODUCT_NAME} Core Components" SecWebinosUserSpace
 SectionIn RO
 
@@ -293,14 +301,6 @@ noPZH:
 			
 	Call RefreshShellIcons
 				
-SectionEnd
-
-Section "Add ${PRODUCT_NAME} local PZH" SecWebinosLocalPZH
-	DetailPrint "Configuring windows to autostart ${PRODUCT_NAME} PZH"
-
-	; Service (auto starting)
-	nsSCM::Install /NOUNLOAD "webinos_pzh" "webinos pzh" 16 2 "$INSTDIR\bin\wrt\webinosNodeService.exe" "" "" "" ""
-
 SectionEnd
 
 /*

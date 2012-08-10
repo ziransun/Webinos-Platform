@@ -388,7 +388,7 @@ this.WidgetProcessor = (function() {
           return;
         }
       }
-      that.setInvalid("ta-RGNHRBWNZV");
+      that.setInvalid("ta-RGNHRBWNZV"); 
     };
 
     step9 = function() {
@@ -465,7 +465,7 @@ this.WidgetProcessor = (function() {
         }
         /* choose an undersize icon in preference to an oversize one */
         if(undersizePreference) widgetConfig.prefIcon = undersizePreference;
-        else if(oversizePreference) widgetConfig.prefIcon = oversizePreference;
+        else if (oversizePreference) widgetConfig.prefIcon = oversizePreference;
       }
       finishProcess();
     };
