@@ -130,9 +130,11 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
     }
   });
 
-  cs.listen(session.configuration.pzpWebServerPort, pzp.address, function(){
-    log.info("listening on port "+session.configuration.pzpWebServerPort + " and hostname "+pzp.address);
+  cs.on("listening", function() {
+	log.info("listening on port "+session.configuration.pzpWebServerPort + " and hostname "+pzp.address);
   });
+  
+  cs.listen(session.configuration.pzpWebServerPort, pzp.address);
 
   var httpserver = http.createServer(function(request, response) {
     log.info("received request for " + request.url);
@@ -150,10 +152,12 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
     }
   });
 
-  httpserver.listen(session.configuration.pzpHttpServerPort, pzp.address, function() {
+  httpserver.on("listening", function() {
     log.info("listening on port "+session.configuration.pzpHttpServerPort + " and hostname "+pzp.address);
     callback("startedWebSocketServer");
   });
+  
+  httpserver.listen(session.configuration.pzpHttpServerPort, pzp.address);
 
   function wsMessage(connection, utf8Data) {
     //schema validation
