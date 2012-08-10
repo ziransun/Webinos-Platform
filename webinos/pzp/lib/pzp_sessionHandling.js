@@ -612,7 +612,9 @@ Pzp.prototype.initializePzp = function(config, modules, callback) {
                 }
               });
             } else {
-							callback.call(this, "startedPZP", this);
+				  if (typeof callback !== "undefined") {
+					callback.call(self, "startedPZP", self);
+				}
             }
           });
         });
