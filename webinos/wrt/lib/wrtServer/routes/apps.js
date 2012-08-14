@@ -105,7 +105,7 @@
 					}
 			}
 
-			res.render('apps', { pageTitle: 'installed apps', list: cfgs });
+			res.render('apps', { pageTitle: 'installed apps', list: cfgs, feedback: req.param('feedback', '') });
     };
 
     exports.install = function (req, res) {
@@ -125,67 +125,120 @@
 
     exports.uninstall = function (req, res) {
 			uninstallWidget(req.param('id', 'missing id!'), function (ok) {
-				res.render('uninstall', { pageTitle: 'uninstall', id: req.param('id', 'missing id!'), success: ok });
+				res.redirect('/apps?feedback=widget uninstalled successfully');
 			});
     };
 		
-		exports.sideLoad = function (req, res) {
-			var wgt = req.param('id', 'missing id!');
-			console.log("side-loading: " + wgt);
-			installWidget(wgt, function (ok, installId) {
-				if (ok) {
-					//res.render('install', { pageTitle: 'install', id: req.param('id', 'missing!'), success: ok, installId: installId });
-					res.redirect('/widget/' + installId);
-				} else {
-					res.render('install', { pageTitle: 'install failed', id: req.param('id', 'missing!'), success: ok });
-				}				
-			});			
-		};
-		
-		exports.boot = function (req, res) {
-			var installId = req.param('id', '404');
-			var cfg = wm.widgetmanager.getWidgetConfig(installId);
-			if (typeof(cfg) === "undefined") {
+	exports.sideLoad = function (req, res) {
+		var wgt = decodeURIComponent(req.param('id', 'missing id!'));
+		console.log("side-loading: " + wgt);
+		installWidget(wgt, function (ok, installId) {
+			if (ok) {				
+				//var redirect = '/widget/' + installId;
+				//var redirect = 'wgt://' + installId;
+				var redirect = 'webinos://sideLoadComplete/' + installId;
+				console.log("sideload redirecting to " + redirect);
+				res.redirect(redirect);
+			} else {			
+				//res.render('install', { pageTitle: 'install failed', id: req.param('id', 'missing!'), success: ok });
+				res.redirect("webinos://sideLoadFailed/");
+			}				
+		});			
+	};
+	
+	exports.boot = function (req, res) {
+		var installId = req.param('id', '404');
+		var cfg = wm.widgetmanager.getWidgetConfig(installId);
+		if (typeof(cfg) === "undefined") {
+		} else {
+			var startFile = cfg.startFile.path;
+			// Support remote start locations
+			var startFileProtocol = url.parse(startFile).protocol;
+			if (typeof startFileProtocol === "undefined") {
+				// Normal widget with local start file.
+				res.redirect(req.url + "/" + startFile);
 			} else {
-				var startFile = cfg.startFile.path;
-				// Support remote start locations
-				var startFileProtocol = url.parse(startFile).protocol;
-				if (typeof startFileProtocol === "undefined") {
-					// Normal widget with local start file.
-					res.redirect(req.url + "/" + startFile);
-				} else {
-					// Redirect to remote start location.
-					res.redirect(startFile);
-				}
+				// Redirect to remote start location.
+				res.redirect(startFile);
 			}
-		};
+		}
+	};
+	
+	exports.run = function (req, res) {
+		var pathName = url.parse(req.url).pathname.substr("widget/".length);
+		var widgetId = req.param('id', '404');
 		
-		exports.run = function (req, res) {
-				var pathName = url.parse(req.url).pathname.substr("widget/".length);
-				var widgetId = req.param('id', '404');
-				
-				var relPath = pathName.replace(widgetId,"");
-				if (relPath === "/")
-					relPath = "index.html";
-				
-				var storePath1 = path.join(wm.Config.get().wrtHome, widgetId);
-				var storePath2 = path.join(storePath1, "wgt");
-				var filename = path.join(storePath2, relPath);
-				
-				path.exists(filename, function(exists) {
-					if(!exists) {
-            res.writeHead(200, {'Content-Type': 'text/plain'});
-            res.write('404 Not Found\n');
-            res.end();
-						return;
-					} else {        
-						var mimeType = mimeTypes[path.extname(filename).split(".")[1]];
-						res.writeHead(200, mimeType);
+		var relPath = pathName.replace(widgetId,"");
+		if (relPath === "/")
+			relPath = "index.html";
+		
+		var storePath1 = path.join(wm.Config.get().wrtHome, widgetId);
+		var storePath2 = path.join(storePath1, "wgt");
+		var filename = path.join(storePath2, relPath);
+		
+		path.exists(filename, function(exists) {
+			if(!exists) {
+				res.writeHead(200, {'Content-Type': 'text/plain'});
+				res.write('404 Not Found\n');
+				res.end();
+				return;
+			} else {        
+				var mimeType = mimeTypes[path.extname(filename).split(".")[1]];
+				res.writeHead(200, mimeType);
 
-						var fileStream = fs.createReadStream(filename);
-						fileStream.pipe(res);
-					}
-			}); 
-		};
+				var fileStream = fs.createReadStream(filename);
+				fileStream.pipe(res);
+			}
+		}); 
+	};
+	
+	exports.bootTest = function (req, res) {
+		var installId = req.param('id', '404');
+		var storage = new wm.WidgetStorage(path.join(wm.Config.get().wrtHome,"/tests"));	
+		var wmTestWidgetManager =  new wm.WidgetManager(storage);		
+		var cfg = wmTestWidgetManager.getWidgetConfig(installId);
+		if (typeof(cfg) === "undefined") {
+		} else {
+			var startFile = cfg.startFile.path;
+			// Support remote start locations
+			var startFileProtocol = url.parse(startFile).protocol;
+			if (typeof startFileProtocol === "undefined") {
+				// Normal widget with local start file.
+				res.redirect(req.url + "/" + startFile);
+			} else {
+				// Redirect to remote start location.
+				res.redirect(startFile);
+			}
+		}
+	};
+	
+	exports.runTest = function (req, res) {
+		var pathName = url.parse(req.url).pathname.substr("widget/".length);
+		var widgetId = req.param('id', '404');
+		
+		var relPath = pathName.replace(widgetId,"");
+		if (relPath === "/")
+			relPath = "index.html";
+		
+		var testPath = path.join(wm.Config.get().wrtHome,"/tests");
+		var storePath1 = path.join(testPath, widgetId);
+		var storePath2 = path.join(storePath1, "wgt");
+		var filename = path.join(storePath2, relPath);
+		
+		path.exists(filename, function(exists) {
+			if(!exists) {
+				res.writeHead(200, {'Content-Type': 'text/plain'});
+				res.write('404 Not Found\n');
+				res.end();
+				return;
+			} else {        
+				var mimeType = mimeTypes[path.extname(filename).split(".")[1]];
+				res.writeHead(200, mimeType);
+
+				var fileStream = fs.createReadStream(filename);
+				fileStream.pipe(res);
+			}
+		}); 
+	};
 
 }(module.exports));

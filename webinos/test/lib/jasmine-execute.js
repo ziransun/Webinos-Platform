@@ -2,7 +2,7 @@
     var jasmineEnv = jasmine.getEnv();
     jasmineEnv.updateInterval = 1000;
 
-    var htmlReporter = new jasmine.HtmlReporter();
+    var htmlReporter = new jasmine.TrivialReporter();
 
     jasmineEnv.addReporter(htmlReporter);
 
@@ -13,14 +13,17 @@
     var currentWindowOnload = window.onload;
 
     window.onload = function() {
-    if (currentWindowOnload) {
-        currentWindowOnload();
-    }
-    execJasmine();
+		if (currentWindowOnload) {
+			currentWindowOnload();
+		}
+		execJasmine();
     };
 
     function execJasmine() {
-    jasmineEnv.execute();
+		if (typeof webinos === "undefined") {
+			alert("webinos not loaded\r\n\r\ntests won't run");
+		} else {
+			jasmineEnv.execute();
+		}
     }
-
 })();

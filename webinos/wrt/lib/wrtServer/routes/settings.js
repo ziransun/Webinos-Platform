@@ -59,7 +59,7 @@
         readPZPConfig(function (pzpConfig) {
             pzpConfig.nodePath = req.body.nodePath;
             pzpConfig.workingDirectoryPath = req.body.webinosPath;
-            pzpConfig.nodeArgs = 'webinos_pzp.js --auth-code=\"' + req.body.authCode + '\" --pzh-name=\"' + req.body.pzhName + '\"';
+            //pzpConfig.nodeArgs = 'webinos_pzp.js --auth-code=\"' + req.body.authCode + '\" --pzh-name=\"' + req.body.pzhName + '\"';
             pzpConfig.instance++;
 
             fs.writeFile((common.webinosConfigPath() + '/wrt/webinos_pzp.json'), JSON.stringify(pzpConfig, null, ' '), function (err) {

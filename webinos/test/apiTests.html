@@ -14,14 +14,14 @@
         .unimplemented { background-color: Red; }
         .key { display: inline-block; width: 20px; }
     </style>
-    <script type="text/javascript" src="client/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" ></script>
     <script type="text/javascript" src="client/webinos.js"></script>
     <script type="text/javascript">
         $(function () {
             function gotPZP(data) {
                 $(".info").html("PZP running").removeClass("pzpNotRunning").addClass("pzpRunning");
             }
-            webinos.session.addListener('registeredBrowser', gotPZP);
+			webinos.session.addListener('registeredBrowser', gotPZP);
         });
     </script>
 </head>

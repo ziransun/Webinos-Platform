@@ -96,7 +96,8 @@ var fileParams = {},
   {name: "authentication", params: {}},
   {name: "contacts", params: {}},
   {name: "devicestatus", params: {}},
-  {name: "discovery", params: {}}
+  {name: "discovery", params: {}},
+  {name: "events", params: {}}
 ];
 
 fs.readFile(path.join(__dirname, "config-pzp.json"), function(err, data) {

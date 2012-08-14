@@ -3,6 +3,7 @@
 	exports.start = function (callback) {
 		var express = require('express');
 		var fs = require('fs');
+		var path = require('path');
 		var common = require('../../../pzp/lib/session_common');
 		var log = new common.debug("wrtServer");
 
@@ -14,7 +15,8 @@
 		app.register('.jade', require('jade'));
 		app.set('view engine', 'jade');
 		app.set('views', __dirname + '/views');
-		app.use(express.static(__dirname + '/static'));
+		app.use(express.static(path.join(__dirname,'/static')));
+		app.use(express.static(path.join(__dirname,'../../../test')));
 		app.use(express.bodyParser());
 
 		app.configure(function () {
@@ -23,20 +25,26 @@
 		});
 
 		// Load routing
-		var store = require('./routes/store');
+		var stores = require('./routes/stores');
 		var apps = require('./routes/apps');
 		var settings = require('./routes/settings');
+		var widgetTests = require('./routes/widgetTests');
 
 		// apps routing
 		app.get('/', apps.installed);
+		app.get('/apps', apps.installed);
 		app.get('/install/:id', apps.install);
 		app.get('/uninstall/:id', apps.uninstall);
 		app.get('/widget/:id', apps.boot);
 		app.get('/widget/:id/*', apps.run);
 		app.get('/sideLoad/:id', apps.sideLoad);
+		
+		// widget testing
+		app.get('/widget-tests', widgetTests.listTestWidgets);
 
-		// store routing
-		app.get('/store', store.list);
+		// stores routing
+		app.get('/stores', stores.stores);
+		//app.get('/store', stores.list);		
 
 		// settings routing
 		app.get('/settings/:saved', settings.getSettings);

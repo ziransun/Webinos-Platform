@@ -5,12 +5,13 @@ html(lang="en")
 		link(type="text/css",href="/css/style.css",rel="stylesheet")
 		script(src='/js/jquery-1.7.2.min.js')
 		script(src="/js/jquery.corner.js")
+		script(src="/client/webinos.js")
 		script(type='text/javascript')
 			$(function() {				
 				$(".page").corner("keep");
 				$(".footer").corner("bottom");
 				$(".testSection").corner();
-				$(".storeMenuItem").click(function() { $(".content").html("<div class='widgetStoreLoading'><img src='/images/loading.gif' /></div>"); var that = this; setTimeout(function() {  window.location = "/Store"; }, 1000); return false; });
+				$(".storeMenuItem").click(function() { $(".content").html("<div class='loadingIndicator'><img src='/images/loading.gif' /></div>"); var that = this; setTimeout(function() {  window.location = "/Stores"; }, 500); return false; });
 				setTimeout(function() {$(".feedback").hide(); },5000);
 			});
 	body
@@ -21,7 +22,7 @@ html(lang="en")
 					div.menuMiddle
 						div.menuItems.commands
 							a.menuItem(href="/") apps
-							a.menuItem.storeMenuItem(href="/store") store
+							a.menuItem.storeMenuItem(href="/stores") stores
 							a.menuItem(href="/tests") tests
 							a.menuItem(href="/settings/false") settings
 							a.menuItem(href="/about") about

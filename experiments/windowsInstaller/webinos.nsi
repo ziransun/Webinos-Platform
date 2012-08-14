@@ -131,7 +131,7 @@ FunctionEnd
 
 Function FinishRun
   ExecShell "" "$INSTDIR\bin\wrt\webinosNodeServiceUI.exe"
-	Sleep 10000
+	Sleep 5000
 	ExecShell "" "$INSTDIR\bin\wrt\webinosBrowser.exe"
 FunctionEnd
 

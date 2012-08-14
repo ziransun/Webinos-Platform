@@ -1,0 +1,25 @@
+script(type="text/javascript")
+	$(function() {
+		var timers = [];
+		$(".widgetStoreListItem").hover(
+			function() { 
+				$(this).addClass("widgetStoreListItemHighlight"); 
+			}, 
+			function() { 
+				$(this).removeClass("widgetStoreListItemHighlight"); 
+			}
+		);
+	});
+- if (stores.length)
+	div.widgetStoreList
+		- stores.forEach(function(item){
+			div.widgetStoreListItem
+				img(width="64px", height="64px", src="#{item.logo}")
+				div.widgetStoreListItemDetails
+					div #{item.name}&nbsp;
+					div= item.description			
+					br
+					a(target="_blank", href="#{item.location}") visit
+		- })
+- else
+	h3 unable to contact store

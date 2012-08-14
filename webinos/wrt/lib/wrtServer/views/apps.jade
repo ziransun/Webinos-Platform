@@ -42,7 +42,8 @@ script(type="text/javascript")
 								//img(src='wgt://#{item.installId}/#{item.prefIcon}', width="64px", height="64px")
 								img(src='widget/#{item.installId}/#{item.prefIcon}', width="64px", height="64px")
 							- else
-								div(style="background: url('/images/no-icon.png') left top no-repeat;")
+								//div(style="background: url('/images/no-icon.png') left top no-repeat;") &nbsp;
+								img(src='/images/no-icon.png', width="64px", height="64px")
 						div.widgetListItemTitle
 							- if (item.name)
 								- var dispName = item.name.unicode;
@@ -59,3 +60,7 @@ script(type="text/javascript")
 	div
 		br
 		a(href="/store") Go to online store
+		
+- if (typeof feedback !== "undefined" && feedback.length > 0)
+	div.feedback.success #{feedback}
+	

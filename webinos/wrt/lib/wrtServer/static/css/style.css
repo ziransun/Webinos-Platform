@@ -250,7 +250,7 @@ a:hover
     color: #ffffff;
 }
 
-.widgetStoreLoading
+.loadingIndicator
 {
 	width:32px;
 	margin-left: auto;
