@@ -146,7 +146,7 @@ farm.loadFarm = function(hostname, connectingAddress, callback) {
         });
       });
       farm.server.on("error", function(error) {
-        if(err && err.code ==="EACCES") {
+        if(error && error.code ==="EACCES") {
           log.error("starting farm failed... try with sudo ");
           process.exit();
         }
@@ -154,7 +154,7 @@ farm.loadFarm = function(hostname, connectingAddress, callback) {
       });
 
       farm.server.on("listening", function(){
-        log.info("initialized at " + connectingAddress);
+        log.info("initialized at " + connectingAddress+" and port " +session.configuration.port.farmPort);
         // Load PZH"s that we already have registered ...
         loadPzhs(farm.config);
         // Start web interface, this webinterface will adapt depending on user who logins
@@ -164,7 +164,7 @@ farm.loadFarm = function(hostname, connectingAddress, callback) {
           }
         });
       });
-      farm.server.listen(session.configuration.farmPort, connectingAddress);
+      farm.server.listen(session.configuration.port.farmPort, connectingAddress);
     });
 
 };
@@ -211,7 +211,7 @@ farm.createPzh = function(host, user, callback) {
     } else {
       name = user.username;
     }
-    var pzhId = host+"/"+name;
+    var pzhId = host+"/"+name+"/";
     if (farm.pzhs[pzhId])  {
       log.info("pzh exists, with same id, cannot create add this instance");
       callback(pzhId, null);
