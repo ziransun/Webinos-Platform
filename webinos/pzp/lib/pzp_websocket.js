@@ -125,7 +125,7 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
 
   cs.on("error", function(err) {
     if (err.code === "EADDRINUSE") {
-      session.configuration.port.pzp_http_webSocket= parseInt(session.configuration.port.pzp_web_webSocket, 10) + 1;
+      session.configuration.port.pzp_http_webSocket = parseInt(session.configuration.port.pzp_web_webSocket, 10) + 1;
       cs.listen(session.configuration.port.pzp_web_webSocket, pzp.address);
     }
   });
@@ -157,7 +157,7 @@ exports.startPzpWebSocketServer = function(pzp, config, callback) {
     callback("startedWebSocketServer");
   });
   
-  httpserver.listen(session.configuration.port.pzp_webSocket, pzp.address, function() {
+  httpserver.listen(session.configuration.port.pzp_webSocket, pzp.address);
 
   function wsMessage(connection, utf8Data) {
     //schema validation
