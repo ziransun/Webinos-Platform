@@ -1,24 +1,27 @@
-div.infoPanel
-	form(method="post")
-		//div.settingField
-			span auth-code
-			input(type="text",name="authCode", value=authCode)
-		//div.settingField
-			span pzh-name
-			input(type="text", name="pzhName", value=pzhName)
+extends layout
 
-		div.settingField
-			span path to node
-			input(type="text", name="nodePath", value=nodePath)
-	
-		div.settingField
-			span path to webinos
-			input(type="text", name="webinosPath", value=webinosPath)
+block content
+	div.infoPanel
+		form(method="post")
+			//div.settingField
+				span auth-code
+				input(type="text",name="authCode", value=authCode)
+			//div.settingField
+				span pzh-name
+				input(type="text", name="pzhName", value=pzhName)
 
-		div.settingSubmit &nbsp;
-			input(type="submit", value="save")
-	
-- if (saved === "success")
-	div.feedback.success settings saved successfully
-- else if (saved === "failure")
-	div.feedback.failure failed to save settings
+			div.settingField
+				span path to node
+				input(type="text", name="nodePath", value=nodePath)
+		
+			div.settingField
+				span path to webinos
+				input(type="text", name="webinosPath", value=webinosPath)
+
+			div.settingSubmit &nbsp;
+				input(type="submit", value="save")
+		
+	- if (saved === "success")
+		div.feedback.success settings saved successfully
+	- else if (saved === "failure")
+		div.feedback.failure failed to save settings

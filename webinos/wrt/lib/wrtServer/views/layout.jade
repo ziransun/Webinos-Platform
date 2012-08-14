@@ -32,7 +32,8 @@ html(lang="en")
 
 			div.pageTitleContainer
 				span.pageTitle &nbsp;#{pageTitle}&nbsp;
-			div.content!= body
+			div.content
+				block content
 			div.footer.commands
 				div.footerRight 
 					span Copyright &copy; 2012 &middot; 

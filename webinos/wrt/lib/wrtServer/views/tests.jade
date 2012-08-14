@@ -1,24 +1,27 @@
-style
-	.info { font-size: .8em; display:inline-block; }
-	.pzpRunning { color: Green; }
-	.pzpNotRunning { color: Red; }
-	.title { padding: 10px 0px 10px 0px; font-size: 2em; }	
-script(type='text/javascript')
-	$(function () {
-		function gotPZP(data) {
-			$(".info").html("PZP running").removeClass("pzpNotRunning").addClass("pzpRunning");
-		}
-		try {
-			webinos.session.addListener('registeredBrowser', gotPZP);
-		} catch (e) {
-			alert("webinos not loaded");
-		}
-	});
-div
-	.title
-		| webinos tests - 
-		.info.pzpNotRunning PZP not running
+extends layout
+
+block content
+	style
+		.info { font-size: .8em; display:inline-block; }
+		.pzpRunning { color: Green; }
+		.pzpNotRunning { color: Red; }
+		.title { padding: 10px 0px 10px 0px; font-size: 2em; }	
+	script(type='text/javascript')
+		$(function () {
+			function gotPZP(data) {
+				$(".info").html("PZP running").removeClass("pzpNotRunning").addClass("pzpRunning");
+			}
+			try {
+				webinos.session.addListener('registeredBrowser', gotPZP);
+			} catch (e) {
+				alert("webinos not loaded");
+			}
+		});
 	div
-		a(target="_blank", href="/apiTests.html") webinos api tests
-	div
-		a(href="/widget-tests") webinos widget tests
+		.title
+			| webinos tests - 
+			.info.pzpNotRunning PZP not running
+		div
+			a(target="_blank", href="/apiTests.html") webinos api tests
+		div
+			a(href="/widget-tests") webinos widget tests

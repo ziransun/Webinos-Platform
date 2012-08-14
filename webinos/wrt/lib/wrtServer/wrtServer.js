@@ -2,6 +2,7 @@
 
 	exports.start = function (callback) {
 		var express = require('express');
+		var http = require('http');
 		var fs = require('fs');
 		var path = require('path');
 		var common = require('../../../pzp/lib/session_common');
@@ -11,17 +12,18 @@
 		var runtimeServerPort = 53510;
 
 		// Create the express app
-		var app = express.createServer();
-		app.register('.jade', require('jade'));
+		var app = express();
+		app.use(app.router);
+		//app.engine('.jade', require('jade').__express);
 		app.set('view engine', 'jade');
-		app.set('views', __dirname + '/views');
+		app.set('views', path.join(__dirname,'/views'));
 		app.use(express.static(path.join(__dirname,'/static')));
 		app.use(express.static(path.join(__dirname,'../../../test')));
 		app.use(express.bodyParser());
 
 		app.configure(function () {
 			app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-			//app.use(express.logger());
+			app.use(express.logger());
 		});
 
 		// Load routing
@@ -55,16 +57,18 @@
 		app.get('/tests', function (req, res) {
 			res.render('tests', { pageTitle: 'tests' });
 		});
+
+		var server = http.createServer(app);
 		
 		// Write port to config file on successful connection
-		app.on('listening', function () {
+		server.on('listening', function () {
 			log.info('server started on port ' + runtimeServerPort);
 			settings.setWRTPort(runtimeServerPort);
 			callback("startedWRT",runtimeServerPort);
 		});
 
 		// Intercept port-in-use errors and try connecting on different port
-		app.on('error', function (err) {
+		server.on('error', function (err) {
 			log.info(err);
 			if (err.code === "EADDRINUSE") {
 				runtimeServerPort++;
@@ -72,8 +76,8 @@
 				app.listen(runtimeServerPort, "localhost");
 			}
 		});
-
-		app.listen(runtimeServerPort, "localhost");
+		
+		server.listen(runtimeServerPort, "localhost");
 	};
 
 } (module.exports));
