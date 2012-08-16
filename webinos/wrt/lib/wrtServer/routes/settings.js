@@ -57,8 +57,8 @@
 
     exports.saveSettings = function (req, res) {
         readPZPConfig(function (pzpConfig) {
-            pzpConfig.nodePath = req.body.nodePath;
             pzpConfig.workingDirectoryPath = req.body.webinosPath;
+            pzpConfig.nodePath =  pzpConfig.workingDirectoryPath + "/bin"; //req.body.nodePath;
             //pzpConfig.nodeArgs = 'webinos_pzp.js --auth-code=\"' + req.body.authCode + '\" --pzh-name=\"' + req.body.pzhName + '\"';
             pzpConfig.instance++;
 

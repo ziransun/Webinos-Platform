@@ -184,6 +184,7 @@ SectionIn RO
   SetOutPath "$INSTDIR"
   File "${SRCROOT}\webinos_pzh.js" 
   File "${SRCROOT}\webinos_pzp.js" 
+  File "${SRCROOT}\webinos_config.json"
   
   SetOutPath "$INSTDIR\webinos"
   File /r /x *.ipch /x .gitignore /x android /x test /x pom.xml /x wscript /x *.gyp /x obj /x *.sln /x *.vcxproj* /x *.sdf /x *.suo /x *.cpp /x *.h /x *.c /x *.cc /x *.exp /x *.ilk /x *.pdb /x *.lib /x .git /x common\manager\context_manager\data\contextSettings.json "${SRCROOT}\webinos\*.*"

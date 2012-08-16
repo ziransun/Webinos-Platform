@@ -290,7 +290,7 @@ a:hover
 .settingField span
 {
     display: inline-block;
-    width: 100px;
+    width: 160px;
 }
 
 .settingField input[type="text"]
@@ -300,7 +300,7 @@ a:hover
 
 .settingSubmit
 {
-    width: 404px;
+    width: 464px;
 }
 
 .settingSubmit input
@@ -331,7 +331,7 @@ a:hover
 
 .testSection
 {
-		background-color: #006d88;		
-		color: #9FC6D0;
-		padding: 10px;
+	background-color: #006d88;		
+	color: #9FC6D0;
+	padding: 10px;
 }
