@@ -190,12 +190,12 @@ Pzp.prototype.update = function(callback) {
         case "android":
           break;
         case "linux":
-          var ad = mdns.createAdvertisement(mdns.tcp('pzp'), global.pzpZeroconfPort);
+     /*     var ad = mdns.createAdvertisement(mdns.tcp('pzp'), global.pzpZeroconfPort);
           ad.start();
           ad.on('error', function(err) {
             log.error("Zeroconf PZP Advertisement error: (" + err+")");
           });
-          log.info("started pzp");
+          log.info("started pzp"); */
           break;
       }
       break;
