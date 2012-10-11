@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Copyright 2012 Samsung Electronics(UK) Ltd
+* Copyright 2012 Ziran Sun Samsung Electronics(UK) Ltd
 * 
 ******************************************************************************/
 
@@ -32,14 +32,50 @@ var disc = require('bridge').load('org.webinos.impl.discovery.DiscoveryHRMImpl',
 
 HRMfindservice = function(serviceType,onFound){
 
-	try 
-	{
-		disc.findServices(serviceType, function(service){onFound(service);}, null, null);
-	//	disc.findServices(servicetype, {onFound:onFound}, null, null);
-	}
-	catch(e) {
-		console.log("discoveryTests - error: "+e.message);
-	}
+  try 
+  {
+    disc.findServices(serviceType, function(service){onFound(service);}, null, null);
+    //disc.findServices(servicetype, {onFound:onFound}, null, null);
+  }
+  catch(e) {
+    console.log("discoveryTests - error: "+e.message);
+  }
 };
 
+/**
+ * Continuously call back with the current position.
+ * @param args Array, first item being the options object, second item being an id.
+ * @param successCB Success callback.
+ * @param errorCB Error callback.
+ * @param objectRef RPC object reference.
+ */
+function watchHRM (args, successCB, objectRef) {
+    //var tint = 2000;
+    var tint = 200;
+	var params = args[0];
+	if (params && params.maximumAge) tint = params.maximumAge;
+	
+	function getData() {
+		// call getCurrentPosition and pass back the position
+		/*getCurrentPosition(params, function(e) {
+			var rpc = rpcHandler.createRPC(objectRef, 'onEvent', e);
+			rpcHandler.executeRPC(rpc);
+		}, errorCB); */
+		
+		HRMfindservice(params, function(e) {
+			var rpc = rpcHandler.createRPC(objectRef, 'onEvent', e);
+			rpcHandler.executeRPC(rpc);
+		}
+	}
+	
+	// initial position
+	getData();
+
+	var watchId = setInterval(function() {getData(); }, tint);
+	
+	watchIdTable[objectRef.rpcId] = watchId;
+}
+
+
 exports.HRMfindservice = HRMfindservice;
+export.watchHRM = watchHRM;
