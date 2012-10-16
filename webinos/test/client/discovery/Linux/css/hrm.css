@@ -1,4 +1,4 @@
-/* http://meyerweb.com/eric/tools/css/reset/ 
+/* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */
@@ -12,8 +12,8 @@ b, u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
 time, mark, audio, video {
 	margin: 0;
@@ -21,11 +21,11 @@ time, mark, audio, video {
 	border: 0;
 	font-size: 100%;
 	font: inherit;
-			
+
 	vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
+article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;
 }
@@ -52,6 +52,11 @@ table {
 
 /* END */
 
+html {
+	height: 100%;
+	overflow: hidden;
+}
+
 a, a:focus {
     outline: none;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
@@ -70,11 +75,14 @@ body {
 	top: 0;
 	left: 0;
 	z-index: -1;
+	padding-left: 330px;
+	padding-top: 55px;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	display: none; /*doesn't look too good*/
 }
 
-#numbers {
-	margin-top: 20px;
-}
 #numbers, #timer {
 	font-family: 'Bowlby One SC', sans-serif;
 }
@@ -125,11 +133,11 @@ body {
 	background: #000105;
 	box-shadow: 0px 0px 35px #00227A;
 	padding: 3px;
+	cursor: pointer;
 }
 
 #graph {
-	position: absolute;
-	bottom: 12%;
+	position: relative;
 	height: 100px;
 	width: 100%;
 }
@@ -137,6 +145,7 @@ body {
 	position: absolute;
 	top: 50%;
 	width: 100%;
+	height: 5px;
 }
 .tmpgrph { /* temp img */
 	height: 100px;
@@ -145,7 +154,9 @@ body {
 .graphbuttons {
 	width: 70%;
 	margin: 0 auto;
-	box-sizing: border-box;  
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
 }
 .graphbuttons div, .connectbuttons a {
 	font-family: Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif;
@@ -162,10 +173,11 @@ body {
 }
 
 #loader{
-	margin: 0;
-	padding: 20px 0;
-	margin-left: 150px;
-	opacity: 0.9;
+	left: 50%;
+    margin: 0;
+    padding-left: 155px;
+    position: absolute;
+    width: 100%;
 }
 
 .connectbuttons {
@@ -180,7 +192,7 @@ body {
 	text-decoration: none;
 }
 #nmbrmain, #nmbr1, #nmbr2, #nmbr3, .graphbuttons div {
-	cursor: pointer;
+	cursor: auto;
 }
 
 canvas {
@@ -218,11 +230,14 @@ canvas {
 /* Sidebar */
 
 aside#sidebar {
-width: 23%;
-background: #E0E0E3 url(../images/sidebar.png) repeat;
-float: left;
-min-height: 1200px;
-margin-top: -4px;
+width: 330px;
+padding: 10px 30px;
+background: rgba(0, 0, 0, 0.2);
+position: absolute;
+height: 100%;
+-moz-box-sizing: border-box;
+-webkit-box-sizing: border-box;
+box-sizing: border-box;
 }
 
 #sidebar hr {
@@ -299,10 +314,13 @@ color: #444444;
 }
 
 #sidebar p {
-color: #666666;
-padding-left: 6%;
-text-shadow: 0 1px 0 #fff;
-margin: 10px 0 0 0;}
+color: #fff;
+margin: 2em 0 0.5em;
+font-size: 16px;
+}
+#sidebar p:first-child {
+margin-top: 0.5em;
+}
 
 #sidebar a {
 color: #666666;
@@ -322,11 +340,19 @@ margin-top: 20%;
 
 
 section#main {
-width: 77%;
-min-height: 500px;
-background: url(../images/sidebar_shadow.png) repeat-y left top;
-float: left;
-margin-top: -2px;
+width: auto;
+height: 100%;
+
+background: url("../../img/rauschen.png") repeat scroll 0 0% #0023a3; /* Old browsers */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, -moz-radial-gradient(center, ellipse cover, #0023a3 0%, #0048ff 100%); /* FF3.6+ */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#0023a3), color-stop(100%,#0048ff)); /* Chrome,Safari4+ */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, -webkit-radial-gradient(center, ellipse cover, #0023a3 0%,#0048ff 100%); /* Chrome10+,Safari5.1+ */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, -o-radial-gradient(center, ellipse cover, #0023a3 0%,#0048ff 100%); /* Opera 12+ */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, -ms-radial-gradient(center, ellipse cover, #0023a3 0%,#0048ff 100%); /* IE10+ */
+background: url("../../img/rauschen.png") repeat scroll 0 0%, radial-gradient(ellipse at center, #0023a3 0%,#0048ff 100%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0023a3', endColorstr='#0048ff',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+padding-left: 330px;
 }
 
 #main h3 {
@@ -403,100 +429,61 @@ margin-right: 0;
 float: left;
 }
 
-select,.button{
-				-moz-border-radius:4px; /* Firefox */
-				-webkit-border-radius:4px; /* Safari, Chrome */
-				-khtml-border-radius:4px; /* Konqueror */
-				border-radius:4px; /* CSS3 */
-				border: 1px solid #a0a0a0;
-				
-				background: url(rauschen.png), -moz-linear-gradient(top, #626262, #959595); /* Firefox */
-				 background:  url(rauschen.png), -webkit-gradient(linear, left top, left bottom, from(#626262), to(#959595)), url(rauschen.png); /* Safari, Chrome*/
-				 background: url(rauschen.png), -webkit-linear-gradient(top, #626262, #959595); /* Safari, Chrome - neue Syntax! */
-				background:  url(rauschen.png), -o-linear-gradient(top, #626262, #959595); /* Opera */
-				background:  url(rauschen.png), -ms-linear-gradient(top, #626262, #959595); /* IE */
-				
-				
-				background:  url(rauschen.png), linear-gradient(top, #626262, #959595); /* W3C Standard */
-				
-				color: #fff;
-				font-family: Helvetica, Arial, sans-serif;
-				font-stretch:condensed;
-				font-weight:bold;
-				font-size:12px;
-				width: 250px;
-				box-shadow: #000000 0px 0px 5px;
-				text-transform:uppercase;
-			}
-			.button{
-				-moz-border-radius:4px; /* Firefox */
-				-webkit-border-radius:4px; /* Safari, Chrome */
-				-khtml-border-radius:4px; /* Konqueror */
-				border-radius:4px; /* CSS3 */
-				border: 1px solid #a0a0a0;
-				
-				background: url(rauschen.png), -moz-linear-gradient(top, #626262, #959595); /* Firefox */
-				 background:  url(rauschen.png), -webkit-gradient(linear, left top, left bottom, from(#626262), to(#959595)), url(rauschen.png); /* Safari, Chrome*/
-				 background: url(rauschen.png), -webkit-linear-gradient(top, #626262, #959595); /* Safari, Chrome - neue Syntax! */
-				background:  url(rauschen.png), -o-linear-gradient(top, #626262, #959595); /* Opera */
-				background:  url(rauschen.png), -ms-linear-gradient(top, #626262, #959595); /* IE */
-				
-				
-				background:  url(rauschen.png), linear-gradient(top, #626262, #959595); /* W3C Standard */
-				
-				color: #fff;
-				font-family: Helvetica, Arial, sans-serif;
-				font-stretch:condensed;
-				font-weight:bold;
-				//font-size:12px;
-				font-size:16px;
-				width: 270px;
-				box-shadow: #000000 0px 0px 5px;
-				text-transform:uppercase;
-			}
-			
-			
-			select{
-				-moz-border-radius:4px; /* Firefox */
-				-webkit-border-radius:4px; /* Safari, Chrome */
-				-khtml-border-radius:4px; /* Konqueror */
-				border-radius:4px; /* CSS3 */
-				border: 1px solid #a0a0a0;
-				
-				background: url(rauschen.png), -moz-linear-gradient(top, #ffb500, #ffff00); /* Firefox */
-				 background:  url(rauschen.png), -webkit-gradient(linear, left top, left bottom, from(#ffb500), to(#ffff00)), url(rauschen.png); /* Safari, Chrome*/
-				 background: url(rauschen.png), -webkit-linear-gradient(top, #ffb500, #ffff00); /* Safari, Chrome - neue Syntax! */
-				background:  url(rauschen.png), -o-linear-gradient(top, #ffb500, #ffff00); /* Opera */
-				background:  url(rauschen.png), -ms-linear-gradient(top, #ffb500, #ffff00); /* IE */
-				
-				
-				background:  url(rauschen.png), linear-gradient(top, #ffb500, #ffff00); /* W3C Standard */
-				
-				color: #000;
-				font-family: Helvetica, Arial, sans-serif;
-				font-stretch:condensed;
-				font-weight:bold;
-				font-size:12px;
-				width: 270px;
-				box-shadow: #000000 0px 0px 5px;
-				text-transform:uppercase;
-			}
-			
-			
-			select[disabled],input[disabled]{
-				opacity: 0.5;
-				}
+select, .button{
+	-moz-border-radius:4px; /* Firefox */
+	-webkit-border-radius:4px; /* Safari, Chrome */
+	-khtml-border-radius:4px; /* Konqueror */
+	border-radius:4px; /* CSS3 */
+	border: 1px solid #a0a0a0;
+	width: 270px;
+	font-family: Helvetica, Arial, sans-serif;
+	font-stretch:condensed;
+	font-weight:bold;
+	box-shadow: #000000 0px 0px 5px;
+	text-transform:uppercase;
+}
+.button {
+	background: url(../rauschen.png), -moz-linear-gradient(top, #626262, #959595); /* Firefox */
+	background: url(../rauschen.png), -webkit-gradient(linear, left top, left bottom, from(#626262), to(#959595)), url(../rauschen.png); /* Safari, Chrome*/
+	background: url(../rauschen.png), -webkit-linear-gradient(top, #626262, #959595); /* Safari, Chrome - neue Syntax! */
+	background: url(../rauschen.png), -o-linear-gradient(top, #626262, #959595); /* Opera */
+	background: url(../rauschen.png), -ms-linear-gradient(top, #626262, #959595); /* IE */
 
+	background: url(../rauschen.png), linear-gradient(top, #626262, #959595); /* W3C Standard */
+
+	font-size:14px;
+	color: #fff;
+	cursor: pointer;
+}
+
+select {
+	background: url(../rauschen.png), -moz-linear-gradient(top, #ffb500, #ffff00); /* Firefox */
+	background: url(../rauschen.png), -webkit-gradient(linear, left top, left bottom, from(#ffb500), to(#ffff00)), url(rauschen.png); /* Safari, Chrome*/
+	background: url(../rauschen.png), -webkit-linear-gradient(top, #ffb500, #ffff00); /* Safari, Chrome - neue Syntax! */
+	background: url(../rauschen.png), -o-linear-gradient(top, #ffb500, #ffff00); /* Opera */
+	background: url(../rauschen.png), -ms-linear-gradient(top, #ffb500, #ffff00); /* IE */
+
+	background: url(../rauschen.png), linear-gradient(top, #ffb500, #ffff00); /* W3C Standard */
+
+	font-size:12px;
+	color: #000;
+}
+
+select[disabled],input[disabled]{
+	opacity: 0.5;
+}
 
 /* Header */
 
-header#header {
+header, #header {
 height: 55px;
 width: 100%;
 background: #222222 url(../images/header_bg.png) repeat-x;
+text-align: center;
 }
-
-
+#header img {
+	margin-left: 330px; /*this will center the logo above the content, pushing it by width of "aside" */
+}
 
 /*****************************************
  *             mobile screen
@@ -523,8 +510,5 @@ background: #222222 url(../images/header_bg.png) repeat-x;
 	}
 	#nmbr1, #nmbr2, #nmbr3 {
 		font-size: 250%;
-	}
-	#graph {
-		bottom: 40%;
 	}
 }
