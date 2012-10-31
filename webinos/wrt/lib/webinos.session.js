@@ -108,6 +108,15 @@
         webinos.session.message_send(msg, pzpId);
         callListenerForMsg(data);
         break;
+        
+      case "pzpStatus":
+      	callListenerForMsg(data);
+      	break;
+      	
+      case "pzpFindPeers":
+	callListenerForMsg(data);
+      	break;
+      
       case "update":
         if(data.type === "prop") {
           callListenerForMsg(data)

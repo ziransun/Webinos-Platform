@@ -33,7 +33,7 @@ var MessageHandler = webinos.global.require(webinos.global.manager.messaging.loc
 var RPCHandler     = rpc.RPCHandler;
 
 var pzpWebSocket  = require("./pzp_websocket");
-var pzpDiscovery = require("./pzp_local");
+var pzpDiscovery = require("./pzp_peerDiscovery");
 
 var Pzp = function () {
   "use strict";
@@ -56,7 +56,7 @@ var Pzp = function () {
   var rpcHandler;
   var discovery;
   this.messageHandler;
-  var localDiscovery;
+  var peerDiscovery;
 
   // Helper functions
   /**
@@ -170,9 +170,11 @@ var Pzp = function () {
     start_PzpServer();//pzp tls server
     self.updateApp(sessionId);//
 
-    if(!localDiscovery && mode !== modes[0]) {// local discovery
-      localDiscovery = new pzpDiscovery();
-      localDiscovery.startLocalAdvert(config.userPref.ports.pzp_zeroConf);
+    if(!peerDiscovery && mode !== modes[0]) {// Peer discovery 
+      peerDiscovery = new pzpDiscovery();
+      //start advertising PZP once it's up
+      peerDiscovery.advertPzp(config.userPref.ports.pzp_zeroConf); 
+      logger.log("PZP advert started...");
     }
   }
 
@@ -429,9 +431,11 @@ var Pzp = function () {
           startOtherManagers();
           if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
             logger.error("Connect  attempt to YOUR PZH "+ config.metaData.pzhId+" failed.");
+            // ziran - comment out the auto discovery 
             if(mode === modes[1]){
-              localDiscovery.findLocalPzp(self, config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
-            }
+              logger.log("pzp sessionHandling - start discovery");
+              peerDiscovery.findPzp(self, config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
+            } 
           } else {
             logger.error(err);
           }
@@ -594,6 +598,25 @@ var Pzp = function () {
       }
     }
   };
+  
+  /**
+   * Get PZP status - An interface for web client to access PZP status
+   * @return mode 
+   */
+  this.getPzpStatus = function(){
+    return mode;
+  }
+  
+  /**
+   * Find other PZP peers - An interface for web client to trigger
+   * PZP peer discovery process
+   */
+  this.findPzpPeers = function(){
+    logger.log("Session findPzpPeers");
+    peerDiscovery = new pzpDiscovery();
+    peerDiscovery.findPzp(self, config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
+	}
+  
   /**
    * TODO: Only send friendly name
    * Connected PZP function returns list of current connected PZPs

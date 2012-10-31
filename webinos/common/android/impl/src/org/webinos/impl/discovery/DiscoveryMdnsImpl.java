@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import java.util.Hashtable;
+import java.util.Enumeration;
+
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
@@ -102,6 +105,52 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 		return new DiscoveryPendingOperation(dnsFindService, dnsFindService);
 	}
 	
+	public void advertServices(String serviceType){
+		//start advertisement
+		//mServiceInfo = ServiceInfo.create("_pzp._tcp.local.", hostname , 0, "PZP service from android");
+		Log.v(TAG, "Mdns advertServices "+serviceType);
+		String hostname = System.getString(androidContext.getContentResolver(),System.ANDROID_ID);
+		mServiceInfo = ServiceInfo.create(serviceType, hostname , 0, "Create new service type from android");
+
+		//Clear zeroconf instance  
+		if(mZeroconf != null)
+		{	
+			Log.v(TAG, "clean up");
+			//clean up
+			mZeroconf.removeServiceListener(ptl_type, mListener);
+			try {
+				mZeroconf.close();
+				mZeroconf = null;
+			} catch (IOException e) {
+				Log.d(TAG, String.format("ZeroConf Error: %s", e.getMessage()));
+			}
+			mLock.release();
+			mLock = null;
+		}
+	
+		mInfo = mWiFiManager.getConnectionInfo();
+		int intaddr = mInfo.getIpAddress();
+		byte[] byteaddr = new byte[] { 
+			(byte) (intaddr & 0xff), (byte) (intaddr >> 8 & 0xff), (byte) (intaddr >> 16 & 0xff), (byte) (intaddr >> 24 & 0xff)
+		};
+		InetAddress addr = null;
+		try {
+			addr = InetAddress.getByAddress(byteaddr);
+		} catch (UnknownHostException e1) {
+			e1.printStackTrace();
+		}
+		
+		Log.d(TAG, String.format("Own address intaddr=%d, addr=%s", intaddr, addr.toString()));
+		
+		try {
+			mZeroconf = JmDNS.create(addr);
+			mZeroconf.registerService(mServiceInfo);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
+		
 	public String getServiceId(String serviceType){
 		// TODO Auto-generated method stub 
 		return null; 
@@ -127,6 +176,7 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 			Log.v(TAG, "DiscoveryMdnsImpl: Enable WiFi");
 			mWiFiManager.setWifiEnabled(true);  
 		}
+		
 		return this;
 	}
 	
@@ -162,7 +212,7 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 		
 		public void run() {
 
-			if(mZeroconf != null)
+		/*	if(mZeroconf != null)
 			{	
 				//clean up
 				mZeroconf.removeServiceListener(ptl_type, mListener);
@@ -174,37 +224,38 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 				}
 				mLock.release();
 				mLock = null;
-			}
+			} */
 			
-			mInfo = mWiFiManager.getConnectionInfo();
-			int intaddr = mInfo.getIpAddress();
-			byte[] byteaddr = new byte[] { 
+			if(mZeroconf == null)
+			{
+				mInfo = mWiFiManager.getConnectionInfo();
+				int intaddr = mInfo.getIpAddress();
+				byte[] byteaddr = new byte[] { 
 					(byte) (intaddr & 0xff), (byte) (intaddr >> 8 & 0xff), (byte) (intaddr >> 16 & 0xff), (byte) (intaddr >> 24 & 0xff)
-			};
-			InetAddress addr = null;
-			try {
-				addr = InetAddress.getByAddress(byteaddr);
-			} catch (UnknownHostException e1) {
-				e1.printStackTrace();
+				};
+				InetAddress addr = null;
+				try {
+					addr = InetAddress.getByAddress(byteaddr);
+				} catch (UnknownHostException e1) {
+					e1.printStackTrace();
+				}
+				
+				try {
+					mZeroconf = JmDNS.create(addr);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} 
 			}
-			
-			Log.d(TAG, String.format("found intaddr=%d, addr=%s", intaddr, addr.toString()));
-			String hostname = System.getString(androidContext.getContentResolver(),System.ANDROID_ID);
 			
 			// Setup DNS
 			mLock = mWiFiManager.createMulticastLock("MdnsLock");
 			mLock.setReferenceCounted(true);
 			mLock.acquire();
 	        
-			String[] Addresses = {null, null , null, null, null, null};
-			srv.deviceAddresses = Addresses;
-            
-			String[] Devicenames = {null, null , null, null, null, null};
-			srv.deviceNames = Devicenames;
-	        
-			try {
+			if(mZeroconf != null) {
 				Log.d(TAG, "Listener handling\n");
-				mZeroconf = JmDNS.create(addr);
+				//mZeroconf = JmDNS.create(addr);
 
 				mZeroconf.addServiceListener(ptl_type, mListener = new ServiceListener() {
 
@@ -217,8 +268,13 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 											
 						//start passing data
 						String[] hostAdresses = ev.getInfo().getHostAddresses();
+						int arraylength = hostAdresses.length; 
+						//filter out itself
+						srv.deviceAddresses = new String[arraylength - 1];
+						srv.deviceNames = new String[arraylength - 1];
 		
 						int i = 0;
+						int j = 0;
 											
 						for (String ha : hostAdresses) {
 												
@@ -238,11 +294,12 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 											
 							if ((!(hostAdresses[i].equals(hostaddr.toString()))) && (!(devicename.equals(ev.getName()))))
 							{	
-								srv.deviceAddresses[i] = hostAdresses[i];
+								srv.deviceAddresses[j ] = hostAdresses[i];
 								Log.d(TAG, "Service IP addresses: " + srv.deviceAddresses[i]);
-								srv.deviceNames[i] = ev.getName();
+								srv.deviceNames[j] = ev.getName();
 								Log.d(TAG, "Hostnames:" + srv.deviceNames[i]);
 								i++;
+								j++;
 							}
 						}
 						findCallback.onFound(srv); 
@@ -260,11 +317,9 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 				});
 	        		
 			//TODO: Isolate create service type out in order to enable app to create new service type  	
-				mServiceInfo = ServiceInfo.create("_pzp._tcp.local.", hostname , 0, "PZP service from android");
-				mZeroconf.registerService(mServiceInfo);
-	    } catch (IOException e) {
-				e.printStackTrace();
-			}
+			/*	mServiceInfo = ServiceInfo.create("_pzp._tcp.local.", hostname , 0, "PZP service from android");
+				mZeroconf.registerService(mServiceInfo); */
+	    }
 		}
 		
 		public void discoveryFinished() {

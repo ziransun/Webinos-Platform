@@ -89,7 +89,18 @@ var PzpWSS = function() {
     if(msg.type === "prop" ) {
       if(msg.payload.status === "registerBrowser") {
         connectedApp(connection);
-      } else {
+      }
+      if(msg.payload.status === "pzpStatus")
+      {
+	logger.log("check PZP status");
+        sendPzpStatusToApp();
+      } 
+      else if (msg.payload.status === "pzpFindPeers")
+      {
+      	logger.log("Start PZP peer discovery");
+	sendPzpPeersToApp();
+      }
+      else {
         autoEnrollment(msg);
       }
     } else {
@@ -310,6 +321,32 @@ var PzpWSS = function() {
       }
     }
   }
+  
+  function sendPzpStatusToApp() {
+    var status = self.getPzpStatus();
+    var payload = { "PZPstatus": status};
+    var appId, msg = prepMsg(sessionId, "", "pzpStatus", payload);
+    for (appId in connectedWebApp) {
+      if (connectedWebApp.hasOwnProperty(appId)){
+        msg.to = appId;
+        connectedWebApp[appId].sendUTF(JSON.stringify(msg));
+      }
+    }
+  }
+  
+  function sendPzpPeersToApp() {
+    console.log("send connected peers");
+    var data = self.findPzpPeers();
+    var payload = { "foundpeers": data};
+    var appId, msg = prepMsg(sessionId, "", "pzpFindPeers", payload);
+    for (appId in connectedWebApp) {
+      if (connectedWebApp.hasOwnProperty(appId)){
+        msg.to = appId;
+        connectedWebApp[appId].sendUTF(JSON.stringify(msg));
+      }
+    }
+  }
+  
   this.startWebSocketServer = function(_pzhId, _sessionId, _address, _ports, _csr, callback) {
     address   = _address;
     pzhId     = _pzhId;
