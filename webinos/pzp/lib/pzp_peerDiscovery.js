@@ -144,10 +144,17 @@ PzpPeerDiscovery.prototype.findPzp = function(parent, tlsServerPort, pzhId){
         msg.name    = getElement(service, 'name');
         msg.port    = getElement(service, 'port');
         msg.address = getElement(service, 'addresses');
+        
+        logger.log("Found peer name:" + msg.name);
+        logger.log("Found peer address:" + msg.address);
 
         logger.log("check mdns discovery list");
         var hostname = os.hostname();
+        logger.log("own hostname is: " + hostname);
+        
         if(msg.name !== os.hostname()) {
+        
+        logger.log("found other host");
           //Update connection - msg.name is machine name
           msg.name = pzhId + "/" + msg.name + "_Pzp";
           msg.port = tlsServerPort;
