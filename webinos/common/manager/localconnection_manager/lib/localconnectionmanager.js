@@ -26,9 +26,9 @@
   
   var mdns = null;
   var bridge = null;
+  var connectPeers = null;
   
   var localconnectionManager = function () {
-		this.connectPeers = null;
 
     // Load zeroconf mdns module 
 		if(os.platform().toLowerCase() == "android")  {
@@ -55,11 +55,11 @@
 	 * @param sendMessageFunction A function that used for sending messages.
 	 */
 	localconnectionManager.prototype.setConnectPeersfunction = function (connectPeersFunction) {
-		this.connectPeers = connectPeersFunction;
+		connectPeers = connectPeersFunction;
 	};
 
 	localconnectionManager.prototype.connectPeers = function (msg) {
-		this.connectPeers(msg);
+		connectPeers(msg);
 	};
   
   /**
@@ -150,7 +150,7 @@
                   msg.name    = option + "/" + msg.name + '_Pzp'; //override peer name with PZP specific
                   logger.log("Connecting to peer: " + msg.name);
                 }
-                this.connectPeers(msg);
+                connectPeers(msg);
               } 
             }
           }
@@ -202,7 +202,7 @@
                 logger.log("found other host");
                 if(serviceType === "pzp")
                   msg.name = option + "/" + msg.name + "_Pzp";
-                this.connectPeers(msg);
+                connectPeers(msg);
               }
             });
 
