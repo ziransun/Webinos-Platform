@@ -173,7 +173,9 @@ var Pzp = function () {
     if(!peerDiscovery && mode !== modes[0]) {// Peer discovery 
       peerDiscovery = new pzpDiscovery();
       //start advertising PZP once it's up
-      peerDiscovery.advertPzp(config.userPref.ports.pzp_zeroConf); 
+      //peerDiscovery.advertPzp(config.userPref.ports.pzp_zeroConf); 
+      peerDiscovery.advertPzp('zeroconf', config.userPref.ports.pzp_zeroConf);
+      
       logger.log("PZP advert started...");
     }
   }
@@ -434,7 +436,7 @@ var Pzp = function () {
             // ziran - comment out the auto discovery 
             if(mode === modes[1]){
               logger.log("pzp sessionHandling - start discovery");
-              peerDiscovery.findPzp(self, config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
+              peerDiscovery.findPzp(self,'zeroconf', config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
             } 
           } else {
             logger.error(err);

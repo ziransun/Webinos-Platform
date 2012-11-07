@@ -82,6 +82,11 @@
       "name": "Context manager",
       "location": "common/manager/context_manager/"
     },
+    "localconnection_manager": {
+      "name": "local connection manager",
+      "location": "common/manager/localconnection_manager/"
+    },
+    
     "messaging": {
       "name": "Messaging Manager",
       "location": "common/manager/messaging/"
