@@ -189,14 +189,14 @@
               
               var nm = pEle.getPeerElement(service, 'name');
               //check nm content
-              if(nm.search("/" !== -1) {
+              if(nm.search("/") !== -1) {
               	logger.log("Found an android peer" + nm);
               	//split name and address
               	var index = nm.indexOf('/');
               	msg.name = nm.slice(0, index);
               	var mAddr = nm.slice(index+1, nm.length);
               	//replace "_" with "."
-              	msg.address = nAddr.replace(/_/g, '.');
+              	msg.address = mAddr.replace(/_/g, '.');
               }
               else
               {
