@@ -84,7 +84,7 @@
       default:
         if(os.platform().toLowerCase() == "android") {
           var serviceString = "_" + serviceType + "._tcp.local.";
-          logger.log("Android mdns-registering service");
+          logger.log("Android mdns-registering service" + serviceString);
           try {
             this.mdns.advertServices(serviceString);
             logger.log("Android mdns-registering service - END");
@@ -187,13 +187,24 @@
             browser.on('serviceUp', function(service) {
               logger.log("Peer Discovery zeroconf mdns service up");
               
-              msg.name    = pEle.getPeerElement(service, 'name');
-              logger.log("Found peer name:" + msg.name);
-              msg.address = pEle.getPeerElement(service, 'addresses');
-              logger.log("Found peer address:" + msg.address);
-              msg.port = port;
-              logger.log("Connecting peer at port: " + msg.port);
-
+              var nm = pEle.getPeerElement(service, 'name');
+              //check nm content
+              if(nm.search("/" !== -1) {
+              	logger.log("Found an android peer" + nm);
+              	//split name and address
+              	var index = nm.indexOf('/');
+              	msg.name = nm.slice(0, index);
+              	var mAddr = nm.slice(index+1, nm.length);
+              	//replace "_" with "."
+              	msg.address = nAddr.replace(/_/g, '.');
+              }
+              else
+              {
+              	msg.name    = nm;
+              	logger.log("Found peer name:" + msg.name);
+              	msg.address = pEle.getPeerElement(service, 'addresses');
+              	logger.log("Found peer address:" + msg.address);
+              }	
               logger.log("check mdns discovery list");
               var hostname = os.hostname();
               logger.log("own hostname is: " + hostname);

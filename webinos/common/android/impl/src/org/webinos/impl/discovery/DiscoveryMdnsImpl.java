@@ -110,9 +110,7 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 		//start advertisement
 		Log.v(TAG, "Mdns advertServices "+serviceType);
 		String hostname = System.getString(androidContext.getContentResolver(),System.ANDROID_ID);
-		//TODO: hard coded port number is - 
-		mServiceInfo = ServiceInfo.create(serviceType, hostname , server_port, "Create new service type from android");
-	
+		
 		mInfo = mWiFiManager.getConnectionInfo();
 		int intaddr = mInfo.getIpAddress();
 		byte[] byteaddr = new byte[] { 
@@ -127,6 +125,19 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 		
 		Log.d(TAG, String.format("Own address intaddr=%d, addr=%s", intaddr, addr.toString()));
 		
+		//Replace "." with "_"
+		String tmp = addr.toString();
+		Log.d(TAG, "original address is: " + tmp);
+		
+		String mIp = tmp.replace(".", "_");
+		Log.d(TAG, "mIP: " + mIp);
+		
+		String mNameIp = hostname + mIp;
+		Log.d(TAG, "mNameIp: " + mNameIp);
+		
+		//mServiceInfo = ServiceInfo.create(serviceType, hostname , server_port, "Create new service type from android");
+		mServiceInfo = ServiceInfo.create(serviceType, mNameIp, server_port, "Create new service type from android");
+		
 		try {
 		    if(mZeroconf == null)
 				mZeroconf = JmDNS.create(addr);
@@ -134,7 +145,7 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}  
 	}
 		
 	public String getServiceId(String serviceType){
@@ -306,8 +317,8 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 				});
 	        		
 			//TODO: Isolate create service type out in order to enable app to create new service type  	
-			/*	mServiceInfo = ServiceInfo.create(ptl_type, hostname , server_port, "PZP service from android");
-				mZeroconf.registerService(mServiceInfo); */
+			 /*   mServiceInfo = ServiceInfo.create(ptl_type, hostname , server_port, "PZP service from android");
+				mZeroconf.registerService(mServiceInfo); */ 
 	    } catch (IOException e) {
 				e.printStackTrace();
 			}
