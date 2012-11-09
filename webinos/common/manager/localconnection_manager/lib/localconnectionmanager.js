@@ -139,7 +139,18 @@
               if((typeof service.deviceNames[i] !== "undefined") && (typeof service.deviceAddresses[i] !== "undefined")) {
                logger.log("Found peer:" + service.deviceAddresses[i]);
                 var msg ={};
-                msg.name    = service.deviceNames[i];
+                var nm = service.deviceNames[i];
+                
+                //Remove the IP address part of Android name
+                if(nm.search("/") !== -1) {
+                  logger.log("Found an android peer" + nm);
+                  //Fetch name of the android device
+                  var index = nm.indexOf('/');
+                  msg.name = nm.slice(0, index);
+                }
+                else
+                  msg.name    = service.deviceNames[i];
+                
                 msg.address = service.deviceAddresses[i];
                 logger.log("found peer address:" + msg.address);
                 msg.port    = port;
