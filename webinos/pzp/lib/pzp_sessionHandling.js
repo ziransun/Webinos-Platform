@@ -433,7 +433,6 @@ var Pzp = function () {
           startOtherManagers();
           if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
             logger.error("Connect  attempt to YOUR PZH "+ config.metaData.pzhId+" failed.");
-            // ziran - comment out the auto discovery 
             if(mode === modes[1]){
               logger.log("pzp sessionHandling - start discovery");
               peerDiscovery.findPzp(self,'zeroconf', config.userPref.ports.pzp_tlsServer, config.metaData.pzhId);
@@ -468,7 +467,6 @@ var Pzp = function () {
             sendMessage(msg, clientSessionId);
             logger.log("pzp server - " + clientSessionId + " connected") ;
           }
-
 
           conn.on("data", function (buffer) {
             handleMsg(conn,buffer);
