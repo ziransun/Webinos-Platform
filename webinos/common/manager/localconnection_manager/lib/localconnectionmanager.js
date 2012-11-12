@@ -17,8 +17,7 @@
 ******************************************************************************/
 
 (function ()	{
-   "use strict";
-
+ 
   var os = require('os');
   var webinos_= require("find-dependencies")(__dirname);
   var logger  = webinos_.global.require(webinos_.global.util.location, "lib/logging.js")(__filename);
@@ -46,9 +45,7 @@
         logger.error("Zeroconf mdns module could not be loaded!" + e);
       }
     }
-    
-  //  self.connectPeers;
-	};
+ };
 
 	/**
 	 * Set the connectPeers function that should be used to connect other peers around.
@@ -57,13 +54,11 @@
 	 * @param connectPeersFunction A function that used for connecting other peers.
 	 */
 	localconnectionManager.prototype.setConnectPeersfunction = function (connectPeersFunction) {
-	//	this.connectPeers = connectPeersFunction;
-  	connectPeers = connectPeersFunction;
+	 	connectPeers = connectPeersFunction;
 	};
 
 	localconnectionManager.prototype.connectPeers = function (msg) {
-	//	this.connectPeers(msg);
-    connectPeers(msg);
+	  connectPeers(msg);
 	}; 
   
   /**
@@ -113,39 +108,6 @@
     }
 	};  
   
-  function onFound(service){
-    logger.log("Android-zerconf onFound callback: found service.");
-    for (var i=0;i<service.deviceAddresses.length;i++)
-    { 
-      if((typeof service.deviceNames[i] !== "undefined") && (typeof service.deviceAddresses[i] !== "undefined")) {
-       logger.log("Found peer:" + service.deviceAddresses[i]);
-        var msg ={};
-        var nm = service.deviceNames[i];
-        
-        //Remove the IP address part of Android name
-        if(nm.search("/") !== -1) {
-          //Fetch name of the android device
-          var index = nm.indexOf('/');
-          msg.name = nm.slice(0, index);
-        }
-        else
-          msg.name    = service.deviceNames[i];
-        
-        msg.address = service.deviceAddresses[i];
-        logger.log("found peer address:" + msg.address);
-        msg.port    = port;
-        
-        //Webinos - to compromise PZP name defined in core
-        if(serviceType === "pzp")
-        {
-          msg.name    = option + "/" + msg.name + '_Pzp'; //override peer name with PZP specific
-          logger.log("Connecting to peer: " + msg.name);
-        }
-        connectPeers(msg);
-      } 
-    }
-  }
-  
    /**
 	 * Find other PZP Peers and try to connect to the found peers. 
    * @param serviceType. service type string. e.g. for PZP using "pzp". 
@@ -167,6 +129,38 @@
       case 'zeroconf':
       default:
         if(os.platform().toLowerCase() == "android") {
+          function onFound(service){
+            for (var i=0;i<service.deviceAddresses.length;i++)
+            { 
+              if((typeof service.deviceNames[i] !== "undefined") && (typeof service.deviceAddresses[i] !== "undefined")) {
+               logger.log("Found peer:" + service.deviceAddresses[i]);
+                var msg ={};
+                var nm = service.deviceNames[i];
+                
+                //Remove the IP address part of Android name
+                if(nm.search("/") !== -1) {
+                  //Fetch name of the android device
+                  var index = nm.indexOf('/');
+                  msg.name = nm.slice(0, index);
+                }
+                else
+                  msg.name    = service.deviceNames[i];
+                
+                msg.address = service.deviceAddresses[i];
+                logger.log("found peer address:" + msg.address);
+                msg.port    = port;
+                
+                //Webinos - to compromise PZP name defined in core
+                if(serviceType === "pzp")
+                {
+                  msg.name    = option + "/" + msg.name + '_Pzp'; //override peer name with PZP specific
+                  logger.log("Connecting to peer: " + msg.name);
+                }
+                connectPeers(msg);
+              } 
+            }
+          }
+          
           var serviceString = "_" + serviceType + "._tcp.local.";
           try{
               var servicetype = {

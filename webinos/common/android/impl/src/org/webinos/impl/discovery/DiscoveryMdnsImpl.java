@@ -288,7 +288,6 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 							InetAddress mHostaddr = null;
 							try {
 								mHostaddr = InetAddress.getByAddress(byteaddr);
-								if(D) Log.d(TAG, "hostaddr: " + mHostaddr.toString());
               } catch (UnknownHostException e1) {
 								e1.printStackTrace();
 							}
@@ -302,7 +301,6 @@ public class DiscoveryMdnsImpl extends DiscoveryManager implements IModule {
 							{	
 								srv.deviceAddresses[i] = hostAdresses[i];
 								if(D) Log.d(TAG, "Service IP addresses: " + srv.deviceAddresses[i]);
-								Log.d(TAG, "hostaddr: " + hostaddr);
 								srv.deviceNames[i] = ev.getName();
 								if(D) Log.d(TAG, "Hostnames:" + srv.deviceNames[i]);
 								i++;
