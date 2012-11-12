@@ -17,12 +17,12 @@
 ******************************************************************************/
 
 (function ()	{
- // "use strict";
+  // "use strict";
 
   var os = require('os');
   var webinos_= require("find-dependencies")(__dirname);
   var logger  = webinos_.global.require(webinos_.global.util.location, "lib/logging.js")(__filename);
-  var pEle  = webinos_.global.require(webinos_.global.util.location, "lib/peerElement.js");
+  var element  = webinos_.global.require(webinos_.global.util.location, "lib/peerElement.js");
   
   var mdns = null;
   var bridge = null;
@@ -46,28 +46,32 @@
         logger.error("Zeroconf mdns module could not be loaded!" + e);
       }
     }
+    
+  //  self.connectPeers;
 	};
 
 	/**
 	 * Set the connectPeers function that should be used to connect other peers around.
 	 * Developers use this function to call different connectPeers APIs under
 	 * different working scenrios. 
-	 * @param sendMessageFunction A function that used for sending messages.
+	 * @param connectPeersFunction A function that used for connecting other peers.
 	 */
 	localconnectionManager.prototype.setConnectPeersfunction = function (connectPeersFunction) {
-		connectPeers = connectPeersFunction;
+	//	this.connectPeers = connectPeersFunction;
+  	connectPeers = connectPeersFunction;
 	};
 
 	localconnectionManager.prototype.connectPeers = function (msg) {
-		connectPeers(msg);
-	};
+	//	this.connectPeers(msg);
+    connectPeers(msg);
+	}; 
   
   /**
 	 * Register and advertise Peer services in the underlayer discovery scheme specified. 
-   * @serviceType: service type string. e.g. for PZP using "pzp". 
-	 * @discoveryMethod Discovery scheme prefered. Call this function every
+   * @param serviceType. Service type string. e.g. for PZP using "pzp". 
+	 * @param discoveryMethod. Discovery scheme prefered. Call this function every
    * time if prefer multiple discovery schemes.
-   * @port port used for advertising the service. 
+   * @param port. Port used for advertising the service. 
    * TODO: DiscoveryMethod as an array so to support multiple methods; replace 
    * serviceType with URI string, e.g. http://webinos.org/pzp (not sure if this makes sense though) 
    */
@@ -78,7 +82,7 @@
         break;
       case 'bluetooth':
         break;
-      //TODO: by default using zeroconf. This should be replaced by a self-scan 
+      //TODO: by default using zeroconf. This will be replaced by a self-scan 
       //process looking for all available discovery methods that are supported  
       case 'zeroconf':
       default:
@@ -111,11 +115,10 @@
   
    /**
 	 * Find other PZP Peers and try to connect to the found peers. 
-   * @serviceType: service type string. e.g. for PZP using "pzp". 
-	 * @discoveryMethod Discovery scheme prefered. Call this function every
-   * time if prefer multiple discovery schemes.
-   * @port TLS port used for establishing connections. 
-   * @option Other options specified by particular connection scheme. Specify it as
+   * @param serviceType. service type string. e.g. for PZP using "pzp". 
+	 * @param discoveryMethod. Discovery scheme prefered. 
+   * @prarm port. TLS port used for establishing connections.  
+   * @param option. Other options specified by particular connection scheme. Specify it as
    * pzh id if serviceType is as "pzp"
    */
   localconnectionManager.prototype.findPeers = function(serviceType, discoveryMethod, port, option){
@@ -143,7 +146,6 @@
                 
                 //Remove the IP address part of Android name
                 if(nm.search("/") !== -1) {
-                  logger.log("Found an android peer" + nm);
                   //Fetch name of the android device
                   var index = nm.indexOf('/');
                   msg.name = nm.slice(0, index);
@@ -155,7 +157,7 @@
                 logger.log("found peer address:" + msg.address);
                 msg.port    = port;
                 
-                //Webinos Specific for PZP service
+                //Webinos - to compromise PZP name defined in core
                 if(serviceType === "pzp")
                 {
                   msg.name    = option + "/" + msg.name + '_Pzp'; //override peer name with PZP specific
@@ -168,9 +170,10 @@
           
           var serviceString = "_" + serviceType + "._tcp.local.";
           try{
-            var servicetype = {
+              var servicetype = {
               api: serviceString
             };
+            
             try {
               this.mdns.findServices(servicetype, onFound);
               logger.log("Android-start finding other peers");
@@ -198,10 +201,9 @@
             browser.on('serviceUp', function(service) {
               logger.log("Peer Discovery zeroconf mdns service up");
               
-              var nm = pEle.getPeerElement(service, 'name');
+              var nm = element.getPeerElement(service, 'name');
               //check nm content
               if(nm.search("/") !== -1) {
-              	logger.log("Found an android peer" + nm);
               	//split name and address
               	var index = nm.indexOf('/');
               	msg.name = nm.slice(0, index);
@@ -213,13 +215,12 @@
               {
               	msg.name    = nm;
               	logger.log("Found peer name:" + msg.name);
-              	msg.address = pEle.getPeerElement(service, 'addresses');
+              	msg.address = element.getPeerElement(service, 'addresses');
               	logger.log("Found peer address:" + msg.address);
               }	
               logger.log("check mdns discovery list");
               var hostname = os.hostname();
-              logger.log("own hostname is: " + hostname);
-          
+              
               if(msg.name !== os.hostname()) {
                 logger.log("found other host");
                 if(serviceType === "pzp")

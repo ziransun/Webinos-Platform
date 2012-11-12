@@ -21,13 +21,12 @@ var logger  = webinos.global.require(webinos.global.util.location, "lib/logging.
 var localconnectionManager = webinos.global.require(webinos.global.manager.localconnection_manager.location, "/lib/localconnectionmanager").localconnectionManager;
 
 var PzpPeerDiscovery = function(){
-
 this.localconnectionManager = new localconnectionManager();
 };
 
 /**
  * Advertise PZP with service type "pzp". 
- * @discoveryMethod
+ * @discoveryMethod. DiscoveryMethod used. 
  * @param port. Port for advertisement. Use 4321 if not configured
  */
 PzpPeerDiscovery.prototype.advertPzp = function(discoveryMethod, port) {
@@ -38,8 +37,9 @@ PzpPeerDiscovery.prototype.advertPzp = function(discoveryMethod, port) {
 };  
 
 /**
- * Find other PZP Peers. Connect to the PZP if known.  
+ * Find and connect other PZP Peers.   
  * @param parent. PZP instance
+ * @param discoveryMethod. DiscoveryMethod used
  * @param tlsServerPort. TLS port for TLS peer connection
  * @param pzhId. PZH identity
  */

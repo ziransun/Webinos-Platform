@@ -1,6 +1,7 @@
 
-Copyright 2012 Ziran Sun, Samsung Electronics(UK) Ltd
+Patches for avahi6.3.1 distribution and mdns node module v0.0.7
 
+Copyright 2012 Ziran Sun, Samsung Electronics(UK) Ltd
 -------------------------------------------------------------------------------
 DESCRIPTION
 
@@ -8,12 +9,12 @@ Both patches are for zeroconf libraries running in Ubuntu environment.
 
 [1] avahi_6.3.1_compat.patch: 
 
-	A patch for avahi Bonjour compatible layer. It provides functions to fetch IP addreses of discovered peers. Both IPv4 and IPv6 are supported.  
+	A patch for avahi Bonjour compatible layer. It provides functions to resolve IP addreses of discovered peers. Both IPv4 and IPv6 are supported.  
 	Applicable for Ubuntu version lower than 12.04
 
 [2] mdns_0.0.7.patch:
 
-	A simple patch that works as a workaround while mdns could not resolve the discovered peers details.  
+	A simple patch that works as a workaround while mdns could not resolve the discovered Android peers details.  
 	
 
 -------------------------------------------------------------------------------
@@ -21,7 +22,7 @@ APPLICABILITY
 
 [1] avahi_6.3.1_compat.patch. 
 
-Applying this patch depends on your Ubuntu system.
+Whether it is mandatory to Apply this patch depends on your Ubuntu system.
  
 To check if this patch is required by your system, do the follows. 
 	
