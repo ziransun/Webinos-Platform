@@ -26,6 +26,7 @@ var rpc          = require("webinos-jsonrpc2");
 var RPCHandler   = rpc.RPCHandler;
 var Registry     = rpc.Registry;
 var PzpDiscovery = require("./pzp_peerDiscovery");
+var PzpSib   = require("./pzp_SIB_auth");
 var Session      = require("./session");
 var path = require("path");
 var os = require('os');
@@ -37,6 +38,7 @@ var Pzp_OtherManager = function (_parent) {
   this.discovery;
   this.messageHandler;
   this.peerDiscovery;
+  this.Sib = new PzpSib(_parent);;
   var self = this;
   var sync = new Sync();
   logger.addId(_parent.config.metaData.webinosName);

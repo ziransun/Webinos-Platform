@@ -20,11 +20,11 @@ var fs          = require("fs");
 var os          = require("os");
 var util        = require("util");
 
-var webinos     = require("find-dependencies")(__dirname);
-var logger      = webinos.global.require(webinos.global.util.location, "lib/logging.js")(__filename) || console;
-var wPath       = webinos.global.require(webinos.global.util.location, "lib/webinosPath.js");
-var wId         = webinos.global.require(webinos.global.util.location, "lib/webinosId.js")
-var certificate = webinos.global.require(webinos.global.manager.certificate_manager.location);
+var dependency  = require("find-dependencies")(__dirname);
+var logger      = dependency.global.require(dependency.global.util.location, "lib/logging.js")(__filename) || console;
+var wPath       = dependency.global.require(dependency.global.util.location, "lib/webinosPath.js");
+var wId         = dependency.global.require(dependency.global.util.location, "lib/webinosId.js")
+var certificate = dependency.global.require(dependency.global.manager.certificate_manager.location);
 
 /**
  *
@@ -80,6 +80,8 @@ function createNewConfiguration(self, webinosType, inputConfig, callback){
             }
           }
         });
+      } else {
+         logger.log("Error reading default configuration details");
       }
     });
   } catch (err) {
@@ -95,7 +97,6 @@ function createNewConfiguration(self, webinosType, inputConfig, callback){
 */
 Config.prototype.setConfiguration = function (webinosType, inputConfig, callback) {
   var self = this, conn_key, cn;
-
   wId.fetchDeviceName(webinosType, inputConfig, function(deviceName){
     var webinosRoot  =  path.join(wPath.webinosPath(), deviceName);
     logger.addType(deviceName); // per instance this should be only set once..
@@ -103,6 +104,7 @@ Config.prototype.setConfiguration = function (webinosType, inputConfig, callback
       logger.error("callback missing");
       return;
     }
+
     self.fetchMetaData(webinosRoot, deviceName, function(status, value){
       if (status && value && (value.code=== "ENOENT" || value.code=== "EACCES")) {//meta data does not exist
         createNewConfiguration(self, webinosType, inputConfig, callback);
@@ -130,11 +132,13 @@ Config.prototype.setConfiguration = function (webinosType, inputConfig, callback
  * @param user -
  */
 Config.prototype.storeUserDetails = function(user) {
-  if (this.userData && user !== null && this.userData.name !== user.username) {
-    this.userData.name     = user.username;
-    this.userData.email    = user.email;
+    if (this.userData && user !== null && this.userData.name !== user.displayName) {
+    this.userData.name     = user.displayName;
+    this.userData.email    = user.emails;
     this.userData.country  = user.country;
     this.userData.image    = user.image;
+    this.userData.authenticator = user.from;
+    this.userData.identifier = user.identifier;
     this.storeUserData(this.userData);
   }
 };
@@ -245,26 +249,6 @@ Config.prototype.storeCrl = function (data) {
     }
   });
 };
-
-/**
- *
- * @param keys
- * @param dir
- */
-Config.prototype.storeKeys = function (keys, name) {
-  var self = this;
-  var filePath = path.join(self.metaData.webinosRoot, "keys", name+".pem");
-  fs.writeFile(path.resolve(filePath), keys, function(err) {
-    if(err) {
-      logger.error("failed saving " + name +".pem");
-    } else {
-      logger.log("saved " + name +".pem");
-      //calling get hash
-     // self.getKeyHash(filePath);
-    }
-  });
-};  
-
 /**
  *
  * @param callback
@@ -429,14 +413,12 @@ Config.prototype.createDirectories = function (callback) {
             fs.mkdirSync(self.metaData.webinosRoot, permission);
         // webinos root was created, we need the following 1st level dirs
         var list = [ path.join(wPath.webinosPath(), "logs"), path.join(self.metaData.webinosRoot, "wrt"), path.join(wPath.webinosPath(), "wrt"), path.join(self.metaData.webinosRoot, "policies"),
-            path.join(self.metaData.webinosRoot, "certificates"), path.join(self.metaData.webinosRoot, "userData"), path.join(self.metaData.webinosRoot, "keys")];
+            path.join(self.metaData.webinosRoot, "certificates"), path.join(self.metaData.webinosRoot, "userData"), path.join(self.metaData.webinosRoot, "keys"), path.join(self.metaData.webinosRoot, "certificates", "external"),
+            path.join(self.metaData.webinosRoot, "certificates", "internal")];
         list.forEach(function (name) {
             if (!fs.existsSync(name))
                 fs.mkdirSync(name, permission);
         });
-        // And this 2nd level dirs, if they already exist, it will end, through error
-        fs.mkdirSync(path.join(self.metaData.webinosRoot, "certificates", "external"), permission);
-        fs.mkdirSync(path.join(self.metaData.webinosRoot, "certificates", "internal"), permission);
         // Notify that we are done
         callback(true);
     } catch (err) {
@@ -474,6 +456,7 @@ Config.prototype.createPolicyFile = function(self) {
 Config.prototype.fetchConfigDetails = function(webinosType, inputConfig, callback) {
   var self = this;
   var filePath = path.resolve(__dirname, "../../../../webinos_config.json");
+    try {
   fs.readFile(filePath, function(err,data) {
     if (!err) {
       var key, userPref = JSON.parse(data.toString());
@@ -481,7 +464,6 @@ Config.prototype.fetchConfigDetails = function(webinosType, inputConfig, callbac
       self.userPref.ports.provider           = userPref.ports.provider;
       self.userPref.ports.provider_webServer = userPref.ports.provider_webServer;
       self.userPref.ports.pzp_webSocket      = userPref.ports.pzp_webSocket;
-      self.userPref.ports.pzp_web_webSocket  = userPref.ports.pzp_web_webSocket;
       self.userPref.ports.pzp_tlsServer      = userPref.ports.pzp_tlsServer;
       self.userPref.ports.pzp_zeroConf       = userPref.ports.pzp_zeroConf;
 
@@ -533,6 +515,9 @@ Config.prototype.fetchConfigDetails = function(webinosType, inputConfig, callbac
       });
     });
   });
+    }catch(err) {
+        console.log(err);
+    }
 };
 
 module.exports = Config;

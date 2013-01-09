@@ -91,7 +91,7 @@ var fileParams = { getPath: function() { return pzp.session.getWebinosPath(); } 
   {name: "file", params: fileParams},
   {name: "geolocation", params: {connector : "geoip"}},
   {name: "applauncher", params: {}},
-  {name: "sensors", params: {}},
+  //{name: "sensors", params: {}},
   {name: "payment", params: {}},
   {name: "tv", params: {}},
   {name: "oauth", params: {}},
@@ -137,9 +137,11 @@ fs.readFile(path.join(__dirname, "config-pzp.json"), function(err, data) {
       config.forcedDeviceName = options.forcedDeviceName;
     }
     if (config.pzhName !== "") {
-      config.hostname = config.pzhHost+'/'+config.pzhName;
+      //config.hostname = config.pzhHost+'/'+config.pzhName;
+     config.sessionIdentity = config.pzhHost+'/'+config.pzhName;
     } else {
-      config.hostname = config.pzhHost;
+      //config.hostname = config.pzhHost;
+      config.sessionIdentity = config.pzhHost;
     }
     initializePzp(config, pzpModules);
 });

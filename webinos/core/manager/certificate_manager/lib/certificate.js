@@ -20,11 +20,15 @@ var keystore = webinos.global.require(webinos.global.manager.keystore.location);
 var logger   = webinos.global.require(webinos.global.util.location, "lib/logging.js")(__filename) || console;
 
 var Certificate = function() {
+  var net = require('net');
   keystore.call(this);
   this.cert         = {};
   this.cert.internal= {};
   this.cert.external= {};
   this.cert.internal= {master: {}, conn: {}, web: {}};
+  this.keys = {};
+  this.keys.master = {};
+  this.keys.conn = {}; 
   var self = this;
 
   this.generateSelfSignedCertificate = function(type, cn, callback) {
@@ -77,7 +81,14 @@ var Certificate = function() {
         }
 
         try {
-          var server = "DNS:"+self.metaData.serverName;
+          var server;
+          if (net.isIP(self.metaData.serverName)) {
+            server = "IP:"+self.metaData.serverName;
+            logger.log("IP server" + server);
+	  } else {
+             server = "DNS:"+self.metaData.serverName;
+             logger.log("DNS" + server);
+          }
            obj.cert = certman.selfSignRequest(obj.csr, 3600, conn_key, cert_type, server);
           logger.log("created self signed certificate");
         } catch (e1) {
@@ -94,11 +105,13 @@ var Certificate = function() {
 
         if (type === "PzhPCA" || type === "PzhCA") {
           self.cert.internal.master.cert = obj.cert;
+          self.keys.master = obj.cert;
           self.crl                       = obj.crl;
 
           self.generateSignedCertificate(self.cert.internal.conn.csr, 1, function(status, value) {
             if (status) {
               self.cert.internal.conn.cert = value;
+              self.keys.conn = value;
               return callback(true, conn_key);
             } else {
               return callback(status, value);
@@ -106,6 +119,7 @@ var Certificate = function() {
           });
         } else if (type === "PzhP" || type === "Pzh" || type === "Pzp") {
           self.cert.internal.conn.cert = obj.cert;
+          self.keys.conn = obj.cert;
           self.cert.internal.conn.csr  = obj.csr;
           if (type === "Pzp") {
             self.crl                     = obj.crl;
@@ -117,6 +131,24 @@ var Certificate = function() {
       }
     });
   };
+  
+  Certificate.prototype.getKeyHash = function(path, callback){
+    var certman, self = this;
+    try {
+      certman = require("certificate_manager");
+    }catch (err) {
+      return callback(false, err);
+    }
+    try{  
+      var hash = certman.getHash(path);
+      logger.log("Key Hash is" + hash);
+      return callback(true, hash);
+    } catch (err) {
+      logger.log("get certificate manager error" + err);
+      return callback(false, err);
+    }
+  };
+  
   Certificate.prototype.generateSignedCertificate = function(csr, cert_type,  callback) {
     var certman, self = this;
     try {
@@ -128,7 +160,12 @@ var Certificate = function() {
     try {
       self.fetchKey(self.cert.internal.master.key_id, function(status, value) {
         if(status) {
-          var server = "DNS:"+self.metaData.serverName;
+          var server;
+            if (net.isIP(self.metaData.serverName)) {
+              server = "IP:"+self.metaData.serverName;
+            } else { 
+             server = "DNS:"+self.metaData.serverName;
+           }
           var clientCert = certman.signRequest(csr, 3600, value, self.cert.internal.master.cert,  cert_type, server);
           return callback(true, clientCert);
         } else {

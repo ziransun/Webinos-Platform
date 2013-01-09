@@ -134,6 +134,62 @@ var PzpWSS = function(_parent) {
         var msg1 = prepMsg(parent.pzp_state.sessionId, msg.from, "friendlyName", parent.config.metaData.friendlyName);
         self.sendConnectedApp(msg.from, msg1);
       }
+      else if(msg.payload.status === "pzpFindPeers")
+      {
+        //var msg4 = prepMsg(parent.pzp_state.sessionId, msg.from, "pzpPeers", parent.peers);
+       // self.sendConnectedApp(msg.from, msg4);
+        sendPzpPeersToApp();
+      } 
+      else if(msg.payload.status === "showHashQR")
+      {
+        getHashQR(function(value){
+          logger.log("getHashQR value: " + value);
+          var appId, msg5 = prepMsg(parent.pzp_state.sessionId, msg.from, "showHashQR", value);
+          for (appId in connectedWebApp) {
+            if(connectedWebApp.hasOwnProperty(appId)) {
+              msg.to = appId;
+              connectedWebApp[appId].sendUTF(JSON.stringify(msg5));
+            }
+          }
+          //self.sendConnectedApp(msg.from, msg5);
+        }); 
+          
+      } 
+      else if(msg.payload.status === "checkHashQR")
+      {
+        //get payload message.hash 
+        var hash = msg.payload.message.hash;
+        logger.log("hash passed from client page is: " + hash);
+        checkHashQR(hash, function(value){
+          var appId, msg6 = prepMsg(parent.pzp_state.sessionId, msg.from, "checkHashQR", value);
+          for (appId in connectedWebApp) {
+            if(connectedWebApp.hasOwnProperty(appId)) {
+              msg.to = appId;
+              connectedWebApp[appId].sendUTF(JSON.stringify(msg6));
+            }
+          }
+        });
+      } 
+      else if(msg.payload.status === "pubCert")
+      {
+        exchangeCert(msg, function(value){
+          logger.log("pubCert exchanged: " + value); 
+        });   
+      }
+      else if(msg.payload.status === "pzhCert")
+      {
+        exchangeCert(msg, function(value){
+	  logger.log("pzhCert Value:" + value);
+	});
+      }
+      
+      else if(msg.payload.status === "connectPeers")
+      {
+        connectpeer();
+        
+      }
+      
+      
       else if (msg.payload.status === "infoLog") {
         getWebinosLog("info", function(value) {
           msg1 = prepMsg(parent.pzp_state.sessionId, msg.from, "infoLog", value);
@@ -200,6 +256,82 @@ var PzpWSS = function(_parent) {
     var self = this;
     var httpserver = http.createServer(function (request, response) {
       var parsed = url.parse(request.url, true);
+      var tmp = "";
+      logger.log(parsed);
+      
+      request.on('data', function(data){
+        tmp = tmp + data;
+      });
+      request.on("end", function(data){
+      
+        if (parsed.query && parsed.query.cmd === "pubCert"){
+          var msg = JSON.parse(tmp.toString("utf8"));
+          logger.log(msg);
+          logger.log("got pubcert");
+          //store the pub certificate and send own pub cert back
+          //var filename = msg.payload.message.keyid;
+          var filename = "otherconn";
+          parent.config.storeKeys(msg.payload.message.cert, filename);
+          //send own public key out
+          var to = msg.from;
+          logger.log("exchange cert message sending to: " + to);
+          //save a local copy
+          var filename = "conn"; 
+          parent.config.storeKeys(parent.config.cert.internal.conn.cert, filename);
+          var repubcert = {
+            from: parent.pzp_state.sessionId,
+            payload: {
+              status: "repubCert",  
+              message:
+              {cert: parent.config.cert.internal.conn.cert, keyid: parent.config.cert.internal.conn.key_id}
+            }
+          };
+	    response.writeHead(200, {"Content-Type": "application/json"});
+        response.write(JSON.stringify(repubcert));
+        response.end();
+        
+        console.log("reply back and start popup");
+        var payload = { "pubCert": true};
+        var appId, msg = prepMsg(parent.pzp_state.sessionId, "", "pubCert", payload);
+        for (appId in connectedWebApp) {
+          if (connectedWebApp.hasOwnProperty(appId)){
+            msg.to = appId;
+            connectedWebApp[appId].sendUTF(JSON.stringify(msg));
+          }
+        }
+      }
+      else if (parsed.query && parsed.query.cmd === "pzhCert"){
+        if (!parent.config.cert.external.hasOwnProperty(parsed.query.from)) {
+          var msg = JSON.parse(tmp.toString("utf8"));
+          logger.log(msg);
+          logger.log("got pzhcert");
+          logger.log("storing external cert");
+          parent.config.cert.external[msg.from] = { cert: msg.payload.message.cert, crl: msg.payload.message.crl};
+          parent.config.storeCertificate(parent.config.cert.external,"external");
+	    //send own certificate back
+	        
+	    var to = msg.from;
+	    logger.log("exchange cert message sending to: " + to);
+		      
+	    var replycert = {
+              from: parent.pzp_state.sessionId,
+              payload: {
+                status: "replyCert",  
+                message:
+                {cert: parent.config.cert.internal.master.cert, crl: parent.config.crl}
+              }
+            }; 
+	    response.writeHead(200, {"Content-Type": "application/json"});
+        response.write(JSON.stringify(replycert));
+        response.end();
+          }
+        }
+     /*   response.writeHead(200, {"Content-Type": "application/json"});
+        response.write(JSON.stringify(replycert));
+        response.end(); 
+        return;*/
+      });
+      
       if (parsed.query && parsed.query.cmd === "authStatus") {
         setTimeout(function () {
           sendAuthStatusToApp(parsed.query.pzhid, parsed.query.authCode, parsed.query.connected);
@@ -212,7 +344,7 @@ var PzpWSS = function(_parent) {
       if (err.code === "EADDRINUSE") {
         parent.config.userPref.ports.pzp_webSocket = parseInt(parent.config.userPref.ports.pzp_webSocket, 10) +1;
         logger.error("address in use, now trying port " + parent.config.userPref.ports.pzp_webSocket);
-        httpserver.listen(parent.config.userPref.ports.pzp_webSocket, "localhost");
+        httpserver.listen(parent.config.userPref.ports.pzp_webSocket, "0.0.0.0");
       } else {
         return callback(false, err);
       }
@@ -222,7 +354,7 @@ var PzpWSS = function(_parent) {
       logger.log("httpServer listening at port " + parent.config.userPref.ports.pzp_webSocket+ " and hostname localhost");
       return callback(true, httpserver);
    });
-   httpserver.listen(parent.config.userPref.ports.pzp_webSocket, "localhost");
+   httpserver.listen(parent.config.userPref.ports.pzp_webSocket, "0.0.0.0");
   }
 
   function startAndroidWRT() {
@@ -251,9 +383,266 @@ var PzpWSS = function(_parent) {
       };
     }
   }
+  
+  function sendPzpPeersToApp() {
+    console.log("send connected peers");
+    var result = {};
+    parent.webinos_manager.peerDiscovery.findPzp(parent,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId);
+    logger.log("websocket:");
+    logger.log(result.address);
+    
+    var payload = { "foundpeers": result};
+    var appId, msg = prepMsg(parent.pzp_state.sessionId, "", "pzpFindPeers", payload);
+    for (appId in connectedWebApp) {
+      if (connectedWebApp.hasOwnProperty(appId)){
+        msg.to = appId;
+        connectedWebApp[appId].sendUTF(JSON.stringify(msg));
+      }
+    }
+  }
+  
+  function getHashQR(cb) {
+    var infile = path.join(_parent.config.metaData.webinosRoot, "keys", "conn.pem");
+    
+    //hard coded filepath for Android
+    var outfile = path.join("/data/data/org.webinos.app/node_modules/webinos/wp4/webinos/web_root", "testbed", "QR.png");
+    
+    if(os.platform().toLowerCase() == "android")  {
+      try{
+        parent.webinos_manager.Sib.createQRHash(infile, outfile, 200, 200, function(data){
+          logger.log("calling SIB create QR Hash");
+          cb(data);
+        });
+      } catch(e) {
+        logger.error("Creating Hash QR for Android failed!" + e);
+      }
+    }
+    else {
+      try { 
+        parent.webinos_manager.Sib.createQRHash(infile, null, 0, 0, function(err, data){
+          if(err === null)
+            cb(data);
+          else
+            logger.log("createQRHash failed");
+        });
+      } catch (e) {
+        logger.error("Creating Hash QR failed!" + e);
+      }
+    }  
+  }
+  
+  function checkHashQR(hash, cb) {
+    var filename = path.join(_parent.config.metaData.webinosRoot, "keys", "otherconn.pem");
+    try { 
+      logger.log("android - check hash QR");
+      parent.webinos_manager.Sib.checkQRHash(filename, hash, function(data){
+        if(data)
+        {
+          logger.log("Correct Hash is passed over");
+          cb(true);
+        }
+        else
+        {
+          logger.log("Wrong Hash key");
+          cb(false);
+        }
+          
+      });
+    } catch (e) {
+      logger.error("Checking Hash QR Failed!" + e);
+    }
+  }
+  
+  function connectpeer(){
+    var msg = {};
+          msg.name = "a0de43be327735cb_Pzp";
+	      msg.address = "192.168.43.123";
+	      console.log("connecting to " + msg.address);
+	      parent.pzpClient.connectPeer(msg);
+  }
+  
+  function exchangeCert(message, callback) {
+    var to; 
+    var msg;
+    
+    if(message.payload.status === "pubCert")
+    {
+      to = message.payload.message.peer;
+      if(to === "")
+        logger.log("please select the peer first");
+      else
+      {
+	var msg = prepMsg(parent.pzp_state.sessionId, to, "pubCert", {cert: parent.config.cert.internal.conn.cert, keyid: parent.config.cert.internal.conn.key_id });
+	// save a local copy
+	var filename = "conn";
+	parent.config.storeKeys(parent.config.cert.internal.conn.cert, filename);
+	
+	if(msg) {
+	  var options = {
+	    host: to,
+	    port: 8080,                        
+	    path: '/testbed/client.html?cmd=pubCert', 
+	    method: 'POST',
+	    headers: {
+	      'Content-Length': JSON.stringify(msg).length
+	    }
+	  };
+	}
+      }
+    }
+    else if(message.payload.status === "pzhCert")
+    {
+      to = message.payload.message.peer;
+      logger.log("exchange cert message sending to: " + to);
+      if(to === "")
+        logger.log("please select the peer first");
+      else
+      {
+    logger.log("msg send to: " + to);  
+	var msg = prepMsg(parent.pzp_state.sessionId, to, "pzhCert", {cert: parent.config.cert.internal.master.cert, crl : parent.config.crl});
+     
+	if(msg) {
+	  var options = {
+	    host: to,
+	    port: 8080,                              //pzp webserver port number
+	    path: '/testbed/client.html?cmd=pzhCert', 
+	    method: 'POST',
+	    headers: {
+	      'Content-Length': JSON.stringify(msg).length
+	    }
+	  };
+	}
+      }
+    }  
+    
+    if(msg){
+      var req = http.request(options, function (res) {
+	logger.log("cert back");
+	console.log('STATUS: ' + res.statusCode);
+	console.log('HEADERS: ' + JSON.stringify(res.headers));
+	res.setEncoding('utf8');
+	var tmpdata = "";
+	var peer = {};
+	res.on('data', function (data) {
+	  logger.log('BODY: ' + data);
+	  //check if data ends with }} 
+	  tmpdata = tmpdata + data;
+	  var n=data.indexOf("}}");
+	  if (n !== -1)
+	  {  
+	    logger.log(tmpdata); 
+	    var rmsg = JSON.parse("" + tmpdata); 
+	    if (rmsg.payload && rmsg.payload.status === "repubCert") {
+          logger.log("come to repubCert");
+          var filename = "otherconn";
+	      parent.config.storeKeys(rmsg.payload.message.cert, filename);
+	      //trigger Hash QR display
+	      
+          var payload = { "pubCert": true};
+          var appId, msg = prepMsg(parent.pzp_state.sessionId, "", "pubCert", payload);
+	      for (appId in connectedWebApp) {
+            if (connectedWebApp.hasOwnProperty(appId)){
+              msg.to = appId;
+              connectedWebApp[appId].sendUTF(JSON.stringify(msg));
+            }
+          } 
+        }
+	    else if (rmsg.payload && rmsg.payload.status === "replyCert") {
+	      logger.log("come to replyCert"); 
+	      logger.log("rmsg from: "  + rmsg.from);
+	      parent.config.cert.external[rmsg.from] = { cert: rmsg.payload.message.cert, crl: rmsg.payload.message.crl};
+	      parent.config.storeCertificate(parent.config.cert.external,"external");
+	      
+	      //try to connect
+	      var msg={};
+	      logger.log("rmsg.from: " + rmsg.from);
+	     // msg.name = "a0de43be327735cb_Pzp";
+	      msg.address = "192.168.43.123";
+	      console.log("connecting to " + msg.address);
+	      parent.pzpClient.connectPeer(msg);
+	      
+	    } 
+	  } 
+	});
+      });
 
+      req.on('connect', function(){
+	callback(true);
+      });
+
+      req.on('error', function (err) {
+	callback(err);
+      });
+
+      req.write(JSON.stringify(msg));
+      req.end();
+    } 
+  }
+  
+ /*
+    
+  function exchangeCert(message, callback) {
+    var to = message.payload.message.peer;
+    logger.log("exchange cert message sending to: " + to);
+    var msg = prepMsg(parent.pzp_state.sessionId, to, "pzhCert", {cert: parent.config.cert.internal.master.cert, crl : parent.config.crl});
+   
+    if(msg) {
+      var options = {
+        host: to,
+        port: 8080,                              //pzp webserver port number
+        path: '/testbed/client.html?cmd=pzhCert', 
+        method: 'POST',
+        headers: {
+          'Content-Length': JSON.stringify(msg).length
+        }
+      };
+
+      var req = http.request(options, function (res) {
+	
+	 logger.log("cert back");
+	  console.log('STATUS: ' + res.statusCode);
+          console.log('HEADERS: ' + JSON.stringify(res.headers));
+          res.setEncoding('utf8');
+          var tmpdata = "";
+	  var peer = {};
+        res.on('data', function (data) {
+	   logger.log('BODY: ' + data);
+	   //check if data ends with }} 
+	   tmpdata = tmpdata + data;
+	   var n=data.indexOf("}}");
+	   if (n !== -1)
+	   {  
+	      logger.log(tmpdata); 
+	      var rmsg = JSON.parse("" + tmpdata); 
+	      
+	     if (rmsg.payload && rmsg.payload.status === "replyCert") {
+	     logger.log("come to replyCert"); 
+	     
+	     logger.log("rmsg from: "  + rmsg.from);
+             parent.config.cert.external[rmsg.from] = { cert: rmsg.payload.message.cert, crl: rmsg.payload.message.crl};
+             parent.config.storeCertificate(parent.config.cert.external,"external");
+             } 
+	   } 
+    
+        });
+      });
+
+      req.on('connect', function(){
+        callback(true);
+      });
+
+      req.on('error', function (err) {
+        //callback(false);
+        callback(err);
+      });
+
+      req.write(JSON.stringify(msg));
+      req.end();
+    } 
+  }
+*/  
   function connectedApp(connection) {
-    var appId, tmp, payload, key, msg, msg2;
+    var appId, tmp, payload, key, msg, msg2, msg3;
     if (connection) {
       appId = parent.pzp_state.sessionId+ "/"+ sessionWebApp;
       sessionWebApp  += 1;
@@ -270,6 +659,9 @@ var PzpWSS = function(_parent) {
           self.sendConnectedApp(appId, msg2);
         });
       }
+      //send pzp status
+      msg3 = prepMsg(parent.pzp_state.sessionId, appId, "pzpStatus", parent.pzp_state.mode);
+      self.sendConnectedApp(appId, msg3);
 
       self.sendConnectedApp(appId, msg);
     } else {

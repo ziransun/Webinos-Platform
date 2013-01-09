@@ -28,6 +28,9 @@ var logger     = dependency.global.require(dependency.global.util.location, "lib
 var PzpWebSocket    = require("./pzp_websocket");
 var WebinosManager = require("./pzp_otherManager.js");
 
+var hostname     = dependency.global.require(dependency.global.util.location, "lib/hostname.js");
+var webinosConfiguration = dependency.global.require(dependency.global.util.location, "lib/configuration.js");
+
 var Pzp = function () {
   "use strict";
   var self = this;
@@ -83,18 +86,42 @@ var Pzp = function () {
   this.setConnParam = function(callback) {
     var options ;
     self.config.fetchKey(self.config.cert.internal.conn.key_id, function(status, value) {
+      logger.log("ziran - setConnParam - fetchKey status:" + status);
       if (status) {
-        if (self.pzp_state.mode === self.modes[1]) { // Hub Mode
-          options = {
+	//if (self.pzp_state.mode === self.modes[1]) { // Hub Mode
+	/*  options = {
             key : value,
             cert: self.config.cert.internal.conn.cert,
             crl : self.config.crl,
             ca  : self.config.cert.internal.master.cert,
-            servername: self.config.metaData.pzhId,
+	    servername: self.config.metaData.pzhId,
             rejectUnauthorized: true,
-            requestCert: true
-          };
-        } else {
+	    requestCert: true    
+          }; */
+        
+	
+	var caList = [], crlList = [], key;
+
+        for ( key in self.config.cert.external) {
+          if(self.config.cert.external.hasOwnProperty(key)) {
+            caList.push(self.config.cert.external[key].cert);
+            crlList.push(self.config.cert.external[key].crl);
+          }
+        }
+        // Certificate parameters that will be added in SNI context of farm
+	
+	options = {
+            key : value,
+            cert: self.config.cert.internal.conn.cert,
+           // crl : crlList,
+            ca  : caList,
+	    servername : "192.168.43.123",
+	   
+            rejectUnauthorized: false,
+            requestCert: true    
+          }; 
+        
+	/*else {
           options =  {
             key : value,
             cert: self.config.cert.internal.conn.cert,
@@ -102,7 +129,7 @@ var Pzp = function () {
             rejectUnauthorized: true,
             requestCert: true
           };
-        }
+        } */
         return callback(options)
       }
     });
@@ -213,20 +240,28 @@ var Pzp = function () {
     }
   };
 
-  /**
-   * Initializes PZP WebSocket Server and then tries connecting with the PZH hub
-   * Starting PZP means starting web socket server
-   * @param inputConfig - the input configuration includes Provider address, authCode and PZH address
-   * @param modules - Default modules to load when starting PZP
-   * @param callback - true or false depending on startup status
-   */
-  this.initializePzp = function(inputConfig, modules, callback) {
-    try {
-    self.config = new Session.configuration();// sets configuration
-    self.config.setConfiguration("Pzp", inputConfig, function (status) {
-      if(status){
-        checkMode();   //virgin or hub mode
-        self.setSessionId();//sets pzp sessionId
+    /**
+     * Initializes PZP WebSocket Server and then tries connecting with the PZH hub
+     * Starting PZP means starting web socket server
+     * @param inputConfig - the input configuration includes Provider address, authCode and PZH address
+     * @param modules - Default modules to load when starting PZP
+     * @param callback - true or false depending on startup status
+     */
+    this.initializePzp = function(inputConfig, modules, callback) {
+        try {
+            //util.webinosHostname.getHostName(inputConfig.sessionIdentity, function(_hostname) {
+	      hostname.getHostName(inputConfig.sessionIdentity, function(_hostname) {
+                inputConfig.sessionIdentity = _hostname;
+                //self.config = new util.webinosConfiguration();// sets configuration
+		//self.config = new util.webinosConfiguration();// sets configuration
+		self.config = new webinosConfiguration();
+                self.config.setConfiguration("Pzp", inputConfig, function (status) {
+                    if(status){
+                        checkMode();   //virgin or hub mode
+                        var PzpWebSocket    = require("./pzp_websocket");
+                        var WebinosManager = require("./pzp_otherManager.js");
+
+                        self.setSessionId();//sets pzp sessionId
 
         self.webinos_manager = new WebinosManager(self);
         self.pzpClient = new PzpClient(self);
@@ -255,6 +290,7 @@ var Pzp = function () {
           }
         });
       }
+});
     });
     } catch (err) {
       self.state = self.states[0];//disconnected
@@ -272,8 +308,11 @@ var PzpServer = function(_parent) {
 
   function pzp_authorization (_conn) {
     var msg, text, clientSessionId;
-    text = decodeURIComponent(conn.getPeerCertificate().subject.CN);
+    //text = decodeURIComponent(conn.getPeerCertificate().subject.CN);
+    text = decodeURIComponent(_conn.getPeerCertificate().subject.CN);
+    logger.log("PeerCertificate.subject.CN:" + text);
     clientSessionId = _parent.config.metaData.pzhId + "/"+ text.split(":")[1]; // Assuming in 1 zone;
+    logger.log("clientSessionId: " + clientSessionId);
     _parent.pzp_state.connectedPzp[clientSessionId]= {state: _parent.states[2], socket: _conn};
     _conn.id  = clientSessionId;
     msg = _parent.webinos_manager.messageHandler.registerSender(_parent.pzp_state.sessionId, clientSessionId);
@@ -282,11 +321,16 @@ var PzpServer = function(_parent) {
   }
 
   this.startServer = function() {
-    if (tlsServer === "undefined") {
+   // if (typeof tlsServer === "undefined") {
+      if (tlsServer == null) {
+      logger.log("ziran - PZP start TLS server.");
       _parent.setConnParam(function(certConfig) {
+        logger.log("ziran - start create server.");
         tlsServer = tls.createServer(certConfig, function (conn) {
+          logger.log("ziran - tlsserver create callback");
           var cn, clientSessionId;
           if (conn.authorized) {
+            logger.log("ziran - PZP authorized");
             pzp_authorization(conn);
           } else {
             logger.error("pzp server - pzp client connection rejected")
@@ -319,7 +363,7 @@ var PzpServer = function(_parent) {
         });
         tlsServer.listen(_parent.config.userPref.ports.pzp_tlsServer);
       })
-    }
+    }    
 
   };
 };
@@ -333,7 +377,7 @@ var PzpClient = function (_parent) {
   function pzpClient_Authorized(_msg, _client) {
     var peerSessionId = _msg.name;
     logger.log("authorized & connected to PZP: "+ peerSessionId);
-    _parent.pzp_state.connectedPzp[msg.name] = {state: _parent.states[2], socket: _client};
+    _parent.pzp_state.connectedPzp[_msg.name] = {state: _parent.states[2], socket: _client};
     _client.id = _msg.name;
     var msg1 = _parent.webinos_manager.messageHandler.registerSender(_parent.pzp_state.sessionId, _msg.name);
     _parent.sendMessage(msg1, _msg.name);
@@ -342,9 +386,14 @@ var PzpClient = function (_parent) {
 
   this.connectPeer = function(msg) {
     _parent.setConnParam(function(options) {
-      var client = tls.connect(_parent.port, msg.address, options, function () {
+      logger.log("setConnParam");
+      logger.log("_parent.port: " + _parent.config.userPref.ports.pzp_tlsServer);
+      logger.log("msg.address: " + msg.address);
+      var servername = "192.168.43.123";  //hard code peer ip address in
+      logger.log(options);
+        var client = tls.connect(_parent.config.userPref.ports.pzp_tlsServer, servername, options, function () {
         if (client.authorized) {
-          pzpClient_Authorized(msg, client);
+	  pzpClient_Authorized(msg, client);
         } else {
           logger.error("pzp client - connection failed, " + client.authorizationError);
         }
@@ -360,6 +409,7 @@ var PzpClient = function (_parent) {
 
       client.on("error", function (err) {
         logger.error("pzp client - " + err.message);
+	logger.error(err);
       });
     });
   }
@@ -442,6 +492,9 @@ var ConnectHub = function(_parent) {
     try {
       _parent.setConnParam(function(options){
         options.pzpServerPort = _parent.config.userPref.ports.pzp_tlsServer;
+	logger.log("ziran - connect: " +  options.pzpServerPort);
+	logger.log("ziran - servername: " + _parent.config.metaData.serverName);
+	logger.log("ziran - connect: " + _parent.config.userPref.ports.provider);
         pzpClient = tls.connect(_parent.config.userPref.ports.provider, _parent.config.metaData.serverName, options, function(conn) {
           handleAuthorization(pzpClient, _callback);
         });
@@ -457,6 +510,7 @@ var ConnectHub = function(_parent) {
 
         pzpClient.on("error", function (err) {
           _parent.webinos_manager.startOtherManagers();
+	  logger.log("ziran - starting PZP server");
           pzpServer.startServer();
           if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
             logger.error("Connect  attempt to YOUR PZH "+ _parent.config.metaData.pzhId+" failed.");
@@ -466,7 +520,8 @@ var ConnectHub = function(_parent) {
                 //Do nothing until WinSockWatcher works
               }
               else 
-                _parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId);
+                logger.log("Comment out findPzp");
+                /*_parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId); */
             }
           } else {
             logger.error(err);

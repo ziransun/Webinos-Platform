@@ -94,6 +94,109 @@
         logMessage(data.payload.message);
       }
       webinos.session.addListener('info', printInfo);
+      
+      $("#findPeers").click(function(){
+        var options = {type: 'prop', payload: {status:'pzpFindPeers'}};
+        webinos.session.message_send(options);
+      });
+  
+     $("#showHashQR").click(function(){
+        var options = {type: 'prop', payload: {status:'showHashQR'}};
+        webinos.session.message_send(options);
+      });
+  
+  
+    $("#scanHashQR").click(function(){
+  
+	   window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
+      });
+	  
+	  
+	  
+	  $("#checkHashQR").click(function(){
+		var code = document.URL;
+		var eq = code.indexOf("=");
+		var hash = code.substring(eq + 1, code.length);
+		
+	    while(hash.indexOf('%') != -1)
+	    hash = hash.replace('%3A', ':');
+		console.log("Hash is: " + hash);
+		
+		/* calling listener to check on QR hash */
+		
+        var options = {type: 'prop', payload: {status:'checkHashQR', message:{hash: hash}}};
+        webinos.session.message_send(options);
+      });
+      
+      $("#pickPeer").click(function(){
+        setPage("Choose peer to auth", "peer.html");
+      }); 	  
+      
+      $("#exCert").click(function(){
+        /*console.log("exchange PZH certificate");
+        var options = {type: 'prop', payload: {status:'exCert'}};
+        webinos.session.message_send(options); */
+        setPage("Choose peer to auth", "sib.html");
+        
+      }); 	  
+      
+      $("#connectPeers").click(function(){
+        var options = {type: 'prop', payload: {status:'connectPeers'}};
+        webinos.session.message_send(options); 
+      
+      });
+      
+      
+
+      function displayQR(data) {
+        "use strict";
+        var content = data.payload.message;
+        if(content.indexOf(".png") !== -1){
+          var n=content.lastIndexOf("/");
+          var img = "." + content.substr(n);
+          //img = "." + img;
+        }        
+        else 
+          var img = data.payload.message;
+        console.log(img);
+        var text = "<center>";
+        text += "<p> <img src=" + img + "> </img> </p> ";
+        setArticle("PZP Authorization code",text);
+      }
+      
+      function confirmQR(data) {
+        var result = data.payload.message;
+        if(result){
+          //trigger QR code display
+          //var display = confirm("Show your Hash QR code to the other party?");
+          var display = confirm("Passs your Hash QR code to the other party?");
+          if (display == true)
+          {
+            /*var options = {type: 'prop', payload: {status:'showHashQR'}};
+            webinos.session.message_send(options); */
+            setPage("Choose peer to auth", "peer.html");
+          }
+          else 
+          {
+            //need sanity check that both party have scan each other's hash QR code
+            //start pzh cert exchange request
+            var zonecert = confirm("exchange pzh cert?")
+            if (zonecert == true)
+            {
+              setPage("Choose peer to exchange PZP certificate", "sib.html");
+            }
+          }  
+        }
+             
+      }
+      
+      function setArticle(header,body){
+        $('#main').html('<article class="module width_full"><header><h3>' + header + '</h3></header><div class="module_content">'+ body + '</div></article><div class="spacer"></div>');
+      };
+ 
+       webinos.session.addListener('showHashQR', displayQR);
+       webinos.session.addListener('checkHashQR', confirmQR);
+      
       $("#testapi").click(function(){
         setPage("Test API Demo", "client42.html");
       });
@@ -205,6 +308,44 @@
         }
       }
       webinos.session.addListener('authStatus', authStatus);
+      
+      function pubCert(msg)
+      {
+        var display = confirm("Public certificate exchanged - display your Hash QR code?");
+        if (display == true)
+        {
+          var options = {type: 'prop', payload: {status:'showHashQR'}};
+          webinos.session.message_send(options);
+        }
+        else
+        {
+          var scan = confirm("Start QR scanner?");
+          if(scan == true)
+          {
+            console.log("QR scanner envoke");
+            window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
+            //trigger code checking
+            
+            // make check async?
+         /*   var code = document.URL;
+            var eq = code.indexOf("=");
+            var hash = code.substring(eq + 1, code.length);
+		
+            while(hash.indexOf('%') != -1)
+            hash = hash.replace('%3A', ':');
+            console.log("Hash is: " + hash);
+		
+            // calling listener to check on QR hash 
+		
+            var options = {type: 'prop', payload: {status:'checkHashQR', message:{hash: hash}}};
+            webinos.session.message_send(options); */
+          }
+          else
+            console.log("do nothing");
+        } 
+      }
+      webinos.session.addListener('pubCert', pubCert);
+      
       function error(msg) {
         alert(msg.payload.message);
       }
@@ -242,6 +383,16 @@
     <h3>Connected Devices</h3>
     <ul class="toggle" style="display: block;" id="enumConnectedPzp">
     </ul>
+     <h3> PZP Peer Connection</h3>
+      <ul class="toggle" style="">
+        <!--<li><a href="#findPeers" id="findPeers"> Discover Peers </a></li> -->
+        <li><a href="#pickPeer" id="pickPeer"> Choose Peer for SIB auth </a></li>
+		<li><a href="#showHashQR" id="showHashQR"> Display Hash QR </a></li>
+        <!--<li><a href="#scanHashQR" id="scanHashQR"> Scan Hash QR </a></li> -->
+		<li><a href="#checkHashQR" id="checkHashQR"> Check Hash QR </a></li>
+        <li><a href="#exCert" id="exCert"> Exchange PZH certificate </a></li>
+        <li><a href="#connectPeers" id="connectPeers"> Connect to Peers </a></li>
+       </ul> 
     <h3>APIs</h3>
       <ul class="toggle" style="">
         <li> <a href="#testapi" id="testapi"> Test API </a> </li>
