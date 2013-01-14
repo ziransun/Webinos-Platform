@@ -65,7 +65,7 @@ var Pzp_OtherManager = function (_parent) {
   function syncHash(receivedMsg) {
     var policyPath = path.join(_parent.config.metaData.webinosRoot, "policies","policy.xml");
     var policy = sync.parseXMLFile(policyPath);
-    var list = {trustedList: _parent.config.trustedList, _crl: _parent.config.crl, cert: _parent.config.cert.external, policy: policy};
+    var list = {trustedList: _parent.config.trustedList, exCertList: _parent.config.exCertList,  _crl: _parent.config.crl, cert: _parent.config.cert.external, policy: policy};
     var result = sync.compareFileHash(list, receivedMsg);
     if (Object.keys(result).length >= 1) {
       _parent.prepMsg(_parent.pzp_state.sessionId, _parent.config.metaData.pzhId, "sync_compare", result);

@@ -34,6 +34,7 @@ function Config() {
   certificate.call(this);
   this.metaData       = {};
   this.trustedList    = {pzh:{}, pzp:{}};
+  this.exCertList     = {};
   this.crl            = "";
   this.policies       = {};//todo: integrate policy in the configuration
   this.userData       = {name: ""};
@@ -146,6 +147,7 @@ Config.prototype.storeAll = function() {
   self.storeCertificate(self.cert.internal, "internal");
   self.storeCrl(self.crl);
   self.storeTrustedList(self.trustedList);
+  self.storeExCertList(self.exCertList);
 };
 /**
  *
@@ -297,6 +299,25 @@ Config.prototype.storeTrustedList = function (data) {
     }
   });
 };
+
+/**
+ *
+ * @param data
+ */
+Config.prototype.storeExCertList = function (data) {
+  var self = this;
+  var filePath = path.join(self.metaData.webinosRoot,"exCertList.json");
+  fs.writeFile(path.resolve(filePath), JSON.stringify(data, null, " "), function(err) {
+    if(err) {
+      logger.error("failed saving pzh/pzp in the external certificate list");
+    } else {
+      logger.log("saved pzp/pzh in the external list");
+    }
+  });
+};
+
+
+
 /**
  *
  * @param callback
@@ -313,6 +334,24 @@ Config.prototype.fetchTrustedList = function (callback) {
     }
   });
 };
+
+/**
+ *
+ * @param callback
+ */
+Config.prototype.fetchExCertList = function (callback) {
+  var self = this;
+  var filePath = path.join(self.metaData.webinosRoot, "exCertList.json");
+  fs.readFile(path.resolve(filePath), function(err, data) {
+    if(err) {
+      logger.error("configuration files for external cert list are corrupted, retrying again to create fresh configuration");
+      callback(false);
+    } else {
+      processData(data,callback);
+    }
+  });
+};
+
 /**
  *
  * @param data
