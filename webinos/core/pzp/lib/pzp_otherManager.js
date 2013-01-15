@@ -52,11 +52,19 @@ var Pzp_OtherManager = function (_parent) {
     }
   }
 
-  function setFoundService(validMsgObj){
-    var msg = { from : _parent.pzp_state.sessionId, to: validMsgObj.from, payload: {"status":"foundServices", message:self.discovery.getAllServices(validMsgObj.from)}};
-    msg.payload.id = validMsgObj.payload.message.id;
+ 
+  function setFoundService(validMsgObj){  
+    var services = self.discovery.getAllServices(validMsgObj.from);
+    var msg = {"type" : "prop",
+      "from" : _parent.pzp_state.sessionId,
+      "to"   : validMsgObj.from,
+      "payload":{"status":"foundServices",
+        "message": services,
+        "id" : validMsgObj.payload.message.id }
+        };
+    
     _parent.sendMessage(msg, validMsgObj.from);
-  }
+  };
 
   function getInitModules() {
     return this.loadedModules;
