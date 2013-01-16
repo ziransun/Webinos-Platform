@@ -23,43 +23,26 @@ var logger  = webinos.global.require(webinos.global.util.location, "lib/logging.
 
 var PzpSIBAuth = function(_parent){
 
-  if(os.platform().toLowerCase() == "android")  {
-    try{
-      this.bridge = require('bridge');
-      this.QRencode = this.bridge.load('org.webinos.impl.QRImpl', this);
-    } catch(e) {
-      logger.error("Android QR encoder module could not be loaded!" + e);
-    }
-  }
-  else {
-    try { 
-      this.QRencode = require("qrcode");
-    } catch (e) {
-      logger.error("Desktop node QR module could not be loaded!" + e);
-    }
-  }  
-  
   /**
    * Create QR image using public key Hash
-   * @param filepath. path for the public key certificate
+   * @param infile. Path for the public key certificate
+   * @param outfile. Path for the generate QR image file (Android only)
+   * @param width. Width of QR image to be generated (Android only)
+   * @param height. Height of QR image to be generated (Android only)
+   * @param cb. Callback when QR image generated
    */
   this.createQRHash = function(infile, outfile, width, height, cb) {
     _parent.config.getKeyHash(infile, function(status, value){  
       if(status)
       {
         logger.log("get hash: " + value);
-        //create QR code
         if(os.platform().toLowerCase() == "android") {
           try {
             var bridge = require('bridge');
             QRencode = bridge.load('org.webinos.impl.QRImpl', this);
             QRencode.enCode(value, width, height, outfile, function(outfile){
               cb(outfile);
-          });
-          
-          /*  this.QRencode.enCode(value, width, height, outfile, function(outfile){
-              onsuccess(outfile);
-            }); */
+            });
           }
           catch(e) {
             logger.error("Android QRencode - error: "+e.message);
@@ -67,10 +50,8 @@ var PzpSIBAuth = function(_parent){
         }
         else
         {
-          logger.log("os is not android");
           try {
             var QRCode = require("qrcode");
-            //this.QRencode.toDataURL(value, function(err,url) {  //why doesn't work?
             QRCode.toDataURL(value, function(err, value) {
               logger.log("created url: " + value);
               cb(err, value);
@@ -88,6 +69,8 @@ var PzpSIBAuth = function(_parent){
    /**
    * Compare hash from the scanned QR code with Hash stored locally
    * @param filepath. path for other party's public key certificate
+   * @param hash.  Locally stored hash code
+   * @param cb. Callback when comprison is done   
    */
   this.checkQRHash = function(filename, hash, cb) {
     _parent.config.getKeyHash(filename, function(status, value){  
@@ -112,50 +95,6 @@ var PzpSIBAuth = function(_parent){
       }  
     });  
   };
-  
-  this.exchangePzhCert = function(_parent, from, to, callback) {
-    if(_parent.pzp_state.connectedPzp.hasOwnProperty(from))
-      logger.log("PZP is already connected");
-    else
-    {
-      var payload = {
-	to  : to,
-	from: from,
-	payload: {
-	  status: "pzpSendCert", message:{cert: _parent.config.cert.internal.master.cert}}
-      },
-      length = (JSON.stringify(payload).length % 2 === 0)? JSON.stringify(payload).length + 1: JSON.stringify(payload).length,
-      
-      options= {
-	host: to.split('_')[0],   // localhost?
-	port: 8080,               //port: config.userPref.ports.provider_webServer, 
-	path: "/testbed/client.html?cmd=exchangeCert",   //path: "/main.html?cmd=transferCert",   
-	method:"POST"//,
-      };
-      logger.log("pzp to pzp connection initiated");
-      
-      var req = https.request(options, function(res) {
-	res.on('data', function(data) {
-	  var parse = JSON.parse(data);
-	  if (parse.payload && parse.payload.status === "pzpReceiveCert") {
-	    logger.log("pzp to pzp receive response");
-	    // store certificate 
-	    if (!_parent.config.cert.external.hasOwnProperty(_msg.from)) {
-	      _parent.config.cert.external[_msg.from] = { cert: _msg.payload.message.cert};
-	      _parent.config.storeCertificate(_parent.config.cert.external,"external");
-	    //calling connect other peers  
-	    }
-	  } 
-	});
-	req.on('error', function(err) {
-	  logger.error(err);
-	  if (callback) { callback({to: serverName, cmd: 'pzhPzh', payload: "pzh to pzh certificate exchange failed due to "+ err.message});}
-	});
-	req.write(JSON.stringify(payload));
-	req.end();
-      });   
-    }
-  }
 }
 
   module.exports = PzpSIBAuth;

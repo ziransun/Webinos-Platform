@@ -62,7 +62,6 @@ var Pzp_OtherManager = function (_parent) {
         "message": services,
         "id" : validMsgObj.payload.message.id }
         };
-    
     _parent.sendMessage(msg, validMsgObj.from);
   };
 

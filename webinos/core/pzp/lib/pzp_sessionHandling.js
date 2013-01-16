@@ -48,6 +48,7 @@ var Pzp = function () {
   self.pzpWebSocket = [];
   var hub;
 
+
   // Helper functions
 
   /**
@@ -281,9 +282,7 @@ var PzpServer = function(_parent) {
   function pzp_authorization (_conn) {
     var msg, text, clientSessionId;
     text = decodeURIComponent(_conn.getPeerCertificate().subject.CN);
-    logger.log("PeerCertificate.subject.CN:" + text);
     var cn = decodeURIComponent(_conn.getPeerCertificate().issuer.CN);
-    logger.log("PeerCertificate.issuer: " + cn );
     // check if in the same zone
     var zoneId = _parent.config.metaData.pzhId;
     if(zoneId.indexOf(cn) !=-1)
@@ -305,14 +304,10 @@ var PzpServer = function(_parent) {
 
   this.startServer = function() {
     if (tlsServer == null) {
-      logger.log("ziran - PZP start TLS server.");
       _parent.setConnParam(function(certConfig) {
-        logger.log("ziran - start create server.");
         tlsServer = tls.createServer(certConfig, function (conn) {
-          logger.log("ziran - tlsserver create callback");
           var cn, clientSessionId;
           if (conn.authorized) {
-            logger.log("ziran - PZP authorized");
 	    pzp_authorization(conn);
           } else {
             logger.error("pzp server - pzp client connection rejected")
@@ -367,7 +362,6 @@ var PzpClient = function (_parent) {
 
   this.connectPeer = function(msg) {
     _parent.setConnParam(function(options) {
-      logger.log("msg.name: " + msg.name);
       var name = msg.name;
       var n;
       if(name && (n = name.indexOf("/")))
@@ -376,11 +370,8 @@ var PzpClient = function (_parent) {
 	logger.log("servername: " + options.servername);
       }
       
-      logger.log("connectPeer");
-      logger.log(_parent.config.trustedList);
-      
       var servername = msg.address;
-        var client = tls.connect(_parent.config.userPref.ports.pzp_tlsServer, servername, options, function () {
+      var client = tls.connect(_parent.config.userPref.ports.pzp_tlsServer, servername, options, function () {
         if (client.authorized) {
 	  pzpClient_Authorized(msg, client);
         } else {
@@ -398,7 +389,6 @@ var PzpClient = function (_parent) {
 
       client.on("error", function (err) {
         logger.error("pzp client - " + err.message);
-	logger.error(err);
       });
     });
   }
@@ -481,9 +471,6 @@ var ConnectHub = function(_parent) {
     try {
       _parent.setConnParam(function(options){
         options.pzpServerPort = _parent.config.userPref.ports.pzp_tlsServer;
-	logger.log("ziran - connect: " +  options.pzpServerPort);
-	logger.log("ziran - servername: " + _parent.config.metaData.serverName);
-	logger.log("ziran - connect: " + _parent.config.userPref.ports.provider);
         pzpClient = tls.connect(_parent.config.userPref.ports.provider, _parent.config.metaData.serverName, options, function(conn) {
           handleAuthorization(pzpClient, _callback);
         });
@@ -499,7 +486,6 @@ var ConnectHub = function(_parent) {
 
         pzpClient.on("error", function (err) {
           _parent.webinos_manager.startOtherManagers();
-	  logger.log("ziran - starting PZP server");
           pzpServer.startServer();
           if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
             logger.error("Connect  attempt to YOUR PZH "+ _parent.config.metaData.pzhId+" failed.");
@@ -509,8 +495,7 @@ var ConnectHub = function(_parent) {
                 //Do nothing until WinSockWatcher works
               }
               else 
-                logger.log("Comment out findPzp");
-                /*_parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId); */
+                _parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId);
             }
           } else {
             logger.error(err);

@@ -105,7 +105,6 @@ var Certificate = function() {
 
         if (type === "PzhPCA" || type === "PzhCA") {
           self.cert.internal.master.cert = obj.cert;
-          self.keys.master = obj.cert;
           self.crl                       = obj.crl;
 
           self.generateSignedCertificate(self.cert.internal.conn.csr, 1, function(status, value) {
