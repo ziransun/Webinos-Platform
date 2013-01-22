@@ -95,35 +95,83 @@
       }
       webinos.session.addListener('info', printInfo);
       
+      
+      function findpeers_timeout()
+      {
+	alert("Peer discovery time out - No peers found");
+	/*var timeout = confirm("Find peers timeout?");
+          if (manual == true)
+            setPage("Choose peer to auth", "peer.html");*/
+      }
+      
       $("#findPeers").click(function(){
         var options = {type: 'prop', payload: {status:'pzpFindPeers'}};
         webinos.session.message_send(options);
+        var text = "<center>";
+        text += "<p> <img src=" + 'vehicle/general/ajaxloader.gif' + "> </img> </p> ";
+        setArticle("Peer Discovery in Process",text);
+	//var timeout = setTimeout('findpeers_timeout()', 1000); 
+	//setTimeout('alert(\'Peer discovery time out - No peers found!\')', 1000);
+	
       });
+      
+      function foundpeers(data) {
+        var name = data.payload.message.foundpeers.name;
+        var address = data.payload.message.foundpeers.address;
+        if(!document.getElementById('peer_list'))
+        {
+	  $('#main').html('<article class="module width_full"><header><h3>Discovery Results</h3></header>' +
+          '<div> Peers not connected : <p></p><select id="peer_list" size="6"> <option> </option> </select> </p><br> </div>' + 
+	  '<div> Connected Peers : <p></p><select id="connected_list" size="6"> <option> </option> </select> </p><br> </div>');
+          document.getElementById('peer_list').innerHTML="";
+          document.getElementById('connected_list').innerHTML="";
+        }
+        var list;
+        //TODO: Fileter out and update connected Peer list
+        if(data.payload.message.foundpeers.connected)
+          list= document.getElementById('connected_list'); 
+        else
+          list= document.getElementById('peer_list');
+        var i, dup;
+        for(i=0; i<list.length; i++)
+        {
+          if(list.options[i].text === name)
+            dup = true; 
+        }
+        if((!dup) && (!data.payload.message.foundpeers.connected))
+          $("<option value=" + address + " >" +name + "</option>").appendTo("#peer_list"); 
+        else if((!dup) && (data.payload.message.foundpeers.connected))
+          $("<option value=" + address + " >" +name + "</option>").appendTo("#connected_list"); 
+      }	
+
+      webinos.session.addListener('pzpFindPeers', foundpeers);
+      
+       function connectPeer()
+       {	
+         console.log("connecting peer");
+       } 
   
-     $("#showHashQR").click(function(){
+      $("#showHashQR").click(function(){
         var options = {type: 'prop', payload: {status:'showHashQR'}};
         webinos.session.message_send(options);
       });
   
+      $("#scanHashQR").click(function(){
   
-    $("#scanHashQR").click(function(){
-  
-	   window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
+       window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
       });
 	  
-	  
-	  
-	  $("#checkHashQR").click(function(){
-		var code = document.URL;
-		var eq = code.indexOf("=");
-		var hash = code.substring(eq + 1, code.length);
-		
-	    while(hash.indexOf('%') != -1)
-	    hash = hash.replace('%3A', ':');
-		console.log("Hash is: " + hash);
-		
-		/* calling listener to check on QR hash */
-		
+      $("#checkHashQR").click(function(){
+        var code = document.URL;
+        var eq = code.indexOf("=");
+        var hash = code.substring(eq + 1, code.length);
+
+	while(hash.indexOf('%') != -1)
+        hash = hash.replace('%3A', ':');
+        console.log("Hash is: " + hash);
+
+	/* calling listener to check on QR hash */
+
         var options = {type: 'prop', payload: {status:'checkHashQR', message:{hash: hash}}};
         webinos.session.message_send(options);
       });
@@ -141,12 +189,27 @@
       }); 	  
       
       $("#connectPeers").click(function(){
-        var options = {type: 'prop', payload: {status:'connectPeers'}};
-        webinos.session.message_send(options); 
-      
+        //get selected peer
+        list= document.getElementById('peer_list');
+        var peer = document.getElementById('peer_list').value;
+        if(list.length)
+        {
+          if(!peer)
+            alert("Please choose a peer to connect!");
+          else {
+            alert("communicating selected peer for SiB authentication process");
+            var options = {type: 'prop', payload: {status:'pubCert', message:{peer: peer}}};
+            webinos.session.message_send(options);
+          }
+        }    
+        else
+        {
+          //pop up manual entry form - Add support for manual auth
+          /*var manual = confirm("Manually enter peer address?");
+          if (manual == true)
+            setPage("Choose peer to auth", "peer.html"); */
+        }
       });
-      
-      
 
       function displayQR(data) {
         "use strict";
@@ -154,11 +217,9 @@
         if(content.indexOf(".png") !== -1){
           var n=content.lastIndexOf("/");
           var img = "." + content.substr(n);
-          //img = "." + img;
         }        
         else 
           var img = data.payload.message;
-        console.log(img);
         var text = "<center>";
         text += "<p> <img src=" + img + "> </img> </p> ";
         setArticle("PZP Authorization code",text);
@@ -166,36 +227,41 @@
       
       function confirmQR(data) {
         var result = data.payload.message;
+
         if(result){
-          //trigger QR code display
-          //var display = confirm("Show your Hash QR code to the other party?");
-          var display = confirm("Passs your Hash QR code to the other party?");
+          var display = confirm("Show your Hash QR code to the other party?");
           if (display == true)
           {
-            /*var options = {type: 'prop', payload: {status:'showHashQR'}};
-            webinos.session.message_send(options); */
-            setPage("Choose peer to auth", "peer.html");
+            var options = {type: 'prop', payload: {status:'showHashQR'}};
+            webinos.session.message_send(options); 
+            var request = {type: 'prop', payload: {status:'requestRemoteScanner'}};
+            webinos.session.message_send(request);
           }
           else 
           {
-            //need sanity check that both party have scan each other's hash QR code
             //start pzh cert exchange request
             var zonecert = confirm("exchange pzh cert?")
             if (zonecert == true)
             {
-              setPage("Choose peer to exchange PZP certificate", "sib.html");
+              var options = {type: 'prop', payload: {status:'pzhCert', message:{peer: null}}};
+              webinos.session.message_send(options);
             }
           }  
-        }
-             
+        } 
       }
       
       function setArticle(header,body){
         $('#main').html('<article class="module width_full"><header><h3>' + header + '</h3></header><div class="module_content">'+ body + '</div></article><div class="spacer"></div>');
       };
  
-       webinos.session.addListener('showHashQR', displayQR);
-       webinos.session.addListener('checkHashQR', confirmQR);
+      function startScanner(data)
+      {
+        window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
+      };
+       
+      webinos.session.addListener('showHashQR', displayQR);
+      webinos.session.addListener('checkHashQR', confirmQR);
+      webinos.session.addListener('requestRemoteScanner', startScanner);
       
       $("#testapi").click(function(){
         setPage("Test API Demo", "client42.html");
@@ -322,26 +388,9 @@
           var scan = confirm("Start QR scanner?");
           if(scan == true)
           {
-            console.log("QR scanner envoke");
             window.location.href="http://zxing.appspot.com/scan?ret="+escape('http://localhost:8080/testbed/client.html?code={CODE}');
-            //trigger code checking
-            
-            // make check async?
-         /*   var code = document.URL;
-            var eq = code.indexOf("=");
-            var hash = code.substring(eq + 1, code.length);
-		
-            while(hash.indexOf('%') != -1)
-            hash = hash.replace('%3A', ':');
-            console.log("Hash is: " + hash);
-		
-            // calling listener to check on QR hash 
-		
-            var options = {type: 'prop', payload: {status:'checkHashQR', message:{hash: hash}}};
-            webinos.session.message_send(options); */
+            //TODO: trigger code checking automatically
           }
-          else
-            console.log("do nothing");
         } 
       }
       webinos.session.addListener('pubCert', pubCert);
@@ -385,13 +434,13 @@
     </ul>
      <h3> PZP Peer Connection</h3>
       <ul class="toggle" style="">
-        <!--<li><a href="#findPeers" id="findPeers"> Discover Peers </a></li> -->
-        <li><a href="#pickPeer" id="pickPeer"> Choose Peer for SIB auth </a></li>
-		<li><a href="#showHashQR" id="showHashQR"> Display Hash QR </a></li>
-        <!--<li><a href="#scanHashQR" id="scanHashQR"> Scan Hash QR </a></li> -->
-		<li><a href="#checkHashQR" id="checkHashQR"> Check Hash QR </a></li>
+        <li><a href="#findPeers" id="findPeers"> Discover Peers </a></li>
+        <li><a href="#connectPeers" id="connectPeers"> Connect to the Peer(s) </a></li>
+        <li><a href="#checkHashQR" id="checkHashQR"> Check Hash QR </a></li>
         <li><a href="#exCert" id="exCert"> Exchange PZH certificate </a></li>
-        <li><a href="#connectPeers" id="connectPeers"> Connect to Peers </a></li>
+        <!--<li><a href="#scanHashQR" id="scanHashQR"> Scan Hash QR </a></li> -->
+        <!--<li><a href="#pickPeer" id="pickPeer"> Choose Peer for SIB auth </a></li>
+        <li><a href="#showHashQR" id="showHashQR"> Display Hash QR </a></li> -->
        </ul> 
     <h3>APIs</h3>
       <ul class="toggle" style="">
@@ -435,6 +484,7 @@
           <p>This is the main test page for you pzp. You can also enroll you pzp to your pzh through this page if you have not already connected to one.</p>
           <p><b>Please select one of the actions on the left menu</b></p>
       </div>
+      <div id="loader"></div>
     </article><!-- end of styles article -->
     <div class="spacer"></div>
     <div id="status"> STATUS: <span id="message"></span></div>

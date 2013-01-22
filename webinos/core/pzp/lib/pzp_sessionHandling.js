@@ -41,7 +41,10 @@ var Pzp = function () {
    mode  : self.modes[0], //  3 modes a pzp can be, for peer mode, each PZP needs to be checked if it is connected
    connectedPzp: [], // Stores PZH server details
    connectedPzh: [], // Stores connected PZP information
-   sessionId: ""};
+   discoveredPzp: [], // Store Discovered PZP details
+   sessionId: "",
+   networkAddr: "",
+   connectingPeerAddr: ""};
   self.config = []; // Persistent information
   self.webinos_manager = []; // Communication with other managers
   self.pzpClient = [];
@@ -359,6 +362,26 @@ var PzpClient = function (_parent) {
     _parent.sendMessage(msg1, _msg.name);
     _parent.pzpWebSocket.updateApp();
   }
+  
+  function pzpClient_PeerCleanup() {
+    logger.log("Clean up SiB leftovers");
+    var own = path.join(_parent.config.metaData.webinosRoot, "keys", "conn.pem");
+    var other = path.join(_parent.config.metaData.webinosRoot, "keys", "otherconn.pem");
+    var exlist = path.join(_parent.config.metaData.webinosRoot, "exCertList.json");
+    fs.unlink(own, function(err){
+      if(err) throw err;
+      logger.log("removed" + own);
+    });
+    fs.unlink(other, function(err){
+      if(err) throw err;
+      logger.log("removed" + other);
+    });
+    fs.unlink(exlist, function(err){
+      if(err) throw err;
+      logger.log("removed" + exlist);
+    });
+    _parent.pzp_state.connectingPeerAddr = "";    
+  }
 
   this.connectPeer = function(msg) {
     _parent.setConnParam(function(options) {
@@ -367,13 +390,14 @@ var PzpClient = function (_parent) {
       if(name && (n = name.indexOf("/")))
       {
         options.servername = name.substring(0, n);
-	logger.log("servername: " + options.servername);
+        logger.log("servername: " + options.servername);
       }
       
       var servername = msg.address;
       var client = tls.connect(_parent.config.userPref.ports.pzp_tlsServer, servername, options, function () {
         if (client.authorized) {
 	  pzpClient_Authorized(msg, client);
+	  pzpClient_PeerCleanup();  
         } else {
           logger.error("pzp client - connection failed, " + client.authorizationError);
         }
@@ -495,7 +519,8 @@ var ConnectHub = function(_parent) {
                 //Do nothing until WinSockWatcher works
               }
               else 
-                _parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId);
+                logger.log("in peer mode");
+                //_parent.webinos_manager.peerDiscovery.findPzp(self,'zeroconf', _parent.config.userPref.ports.pzp_tlsServer, _parent.config.metaData.pzhId, function(data){});
             }
           } else {
             logger.error(err);

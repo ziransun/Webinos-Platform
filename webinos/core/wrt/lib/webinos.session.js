@@ -138,7 +138,10 @@
           break;
         case "showHashQR":
           callListenerForMsg(data);
-          break;	  
+          break;	
+        case "requestRemoteScanner":
+            callListenerForMsg(data);
+          break;	
         case "checkHashQR":
           callListenerForMsg(data);
           break;	  
