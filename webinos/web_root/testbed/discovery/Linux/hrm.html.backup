@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+	<head>
+		<meta charset="utf-8"/>
+		<title>Webinos Cardio Hills Remote Sensor Prototype</title>
+		<!--<link rel="stylesheet" type="text/css" href="../../style.css" media="screen" /> -->
+	-	<link rel="stylesheet" href="css/layout.css" type="text/css" media="screen" />
+		<!--<link rel="stylesheet" href="./hrm.css">-->
+		<!--<script type="text/javascript" src="jquery-1.7.1.min.js"></script> -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+		<script type="text/javascript" src="js/jquery.equalHeight.js"></script>
+		<<script type="text/javascript" src="hrm.js"></script>>
+		<script type="text/javascript" src="../../webinos.js"></script> 
+	</head>
+	<body>	
+	<center><div id="header"> <h1><img src="testbed_logo.png"></h1> </div></center>
+		<aside id="sidebar" class="column">
+
+		<p>
+			<INPUT TYPE="submit" onclick="getPZHs()" VALUE="Get Patients" class="button" /><br />
+			<select id="hrmServices" size="5"></select>
+		</p>
+
+		<p>
+			<INPUT TYPE="submit" onclick="getPZPs()" VALUE="Get Patients device" class="button" /><br />
+			<select id="hrmServices" size="5"></select>
+
+		</p>
+		
+		<p>
+			<INPUT TYPE="submit" onclick="startHRM()" ID=HRM VALUE="StartHRM" class="button" /><br />
+		</p>
+		</aside><!-- end of sidebar -->
+
+		<section id="main" class="column">
+	
+		<!--<article class="module width_full">
+			<header><h3>Remote Heart Rate data</h3></header>
+				<div class="module_content">
+					<p>Please select one of the actions on the left menu</p>
+				</div>
+		</article><!-- end of styles article --> -->
+		<center>
+		<header><h3>Remote Heart Rate data</h3></header>
+		<div id="numbers">
+			<div id="nmbrmain"><span id="nmbrmainspan">123</span><p>BPM</p></div>
+		</div>
+		<div id="timer">
+			<a href="#" id="timerstart">Start/Pause Clock</a>
+			<div><span id="h">00</span>:<span id="m">00</span>:<span id="s">00</span>.<span id="ms">0</span></div>
+		</div>
+		
+		<div id="loader"></div>
+		<div id="graph"><img src="img/median.png" class="graphbckgr" id="pulseMed">
+			<canvas id="canvas" height="100" width="400">
+				<p>
+				YOU YOU ARE NOT USING A BROWSER THAT SUPPORTS THE
+				<a href="http://www.w3.org/html/wg/html5/">HTML5</a>
+				&lt;canvas&gt; FEATURE.
+				</p>
+			</canvas>
+		</div>
+		
+		<div class="spacer"></div> 
+		</section>
+
+	</body>
+	
+	<script type="text/javascript">
+	function setArticle(header,body){
+		$('#main').html('<article class="module width_full"><header><h3>' + header + '</h3></header><div 			class="module_content">'+ body + '</div></article><div class="spacer"></div>');
+		$('.column').equalHeight(); // Fix height
+	};
+	
+	
+	jQuery(window).ready(function() {
+	
+		function fillPZAddrs(data) {
+			var pzpId = data.from;
+			var pzhId, connectedPzh , connectedPzp;
+			if (pzpId !== "virgin_pzp") {
+  			pzhId = data.payload.message.pzhId;                                     
+  			connectedPzp = data.payload.message.connectedPzp; // all connected pzp
+  			connectedPzh = data.payload.message.connectedPzh; // all connected pzh
+  			}
+		}
+		webinos.session.addListener('registeredBrowser', fillPZAddrs);
+
+		function updatePZAddrs(data) {
+    		if(typeof data.payload.message.pzp !== "undefined") {
+        		logMessage('new pzp ' + data.payload.message.pzp);
+    		} else {
+        		logMessage('new pzh ' + data.payload.message.pzh);
+    		}
+		}
+		
+		function printInfo(data) {
+			logMessage(data.payload.message);
+		}
+		
+		webinos.session.addListener('update', updatePZAddrs);
+		webinos.session.addListener('info', printInfo);
+	});	
+	
+	function findService(){
+		test = {};
+		$('#hrmServices').empty();
+		
+		webinos.discovery.findServices( 
+		new ServiceType('http://webinos.org/api/discovery'),                         
+		
+		{onFound: function (service) {
+
+		console.log("findservice-serviceAddress" + service.serviceAddress);
+		test[service.serviceAddress] = service;
+		var srv = JSON.stringify(service);
+		console.log("service:" + srv);
+		
+		//fill the list that has services required
+		 $('#hrmServices').append($('<option>' + service.serviceAddress + '</option>'));  
+		}});
+	} 
+
+	$("#hrmServices option").live('click', function(event) {
+		$(this).parent().attr("recent", $(this).val());
+    });
+
+	var bluetoothService = null;
+	
+	function bindService(data) {
+	
+		console.log("recent" + $('#hrmServices').attr('recent'));
+		var recentService = test[$('#hrmServices').attr('recent')];
+		var srv = JSON.stringify(recentService);
+		console.log("service:" + srv);
+		bluetoothService = recentService;
+	}
+	
+	function onFound(service){
+				
+			document.getElementById("loader").innerHTML = "";
+				
+			console.log("onFound callback: found service." + service.values[0]); 
+			
+			nmbrmainspan = document.getElementById('nmbrmainspan');
+			nmbrmainspan.innerHTML = service.values[0];
+	}	
+	
+	function startHRM(data) {
+	
+	/*	"use strict";
+		var text = "";
+		
+		text += "<div id='numbers'><div id='nmbrmain'><span id='nmbrmainspan'>123</span><p>BPM</p></div></div>";
+		
+		text += "<div id='timer'><a href='#' id='timerstart'>Start/Pause Clock</a><div><span id='h'>00</span>:<span id='m'>00</span>:<span id='s'>00</span>.<span id='ms'>0</span></div></div>";
+
+		text += "<div id='loader'></div>";
+		text += "<div id='graph'><img src='img/median.png' class='graphbckgr' id='pulseMed'><canvas id='canvas' height='100' width='400'></canvas></div>";
+
+		setArticle("Heart Rate Data",text);
+		
+		*/
+		
+		
+		
+	
+		var servicetype = {
+			api: 0x00200000
+		} 
+		var text = document.getElementById("HRM");
+		if(text.value==="StartHRM")
+		{
+			document.getElementById("HRM").value="StopHRM";
+			try {
+				$('#loader').html("<img src='img/ajaxloader.gif'>");
+			}
+			catch(e) {
+			console.log("startHRM - loader: "+e.message);
+			}
+			try {
+				bluetoothService.findHRM(servicetype, onFound);				 	
+				console.log("startHRM - END");
+			}
+			catch(e) {
+			console.log("startHRM - error: "+e.message);
+			}
+		}	
+		else if(document.getElementById("HRM").value==="StopHRM")
+		{
+			document.getElementById("HRM").value = 'StartHRM';
+			document.getElementById("loader").innerHTML = ""; 
+			try {
+				bluetoothService.findHRM(servicetype);				 	
+				console.log("stopHRM - END");
+			}
+			catch(e) {
+			console.log("stopHRM - error: "+e.message);
+			}
+		}
+	}
+
+	</script>
+	
+</html>
+
+
