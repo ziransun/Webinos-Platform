@@ -96,6 +96,12 @@
       hrmmodule.HRMfindservice(data, successCallback); 
     }
   }
+  if((os.type().toLowerCase() == "linux") && (os.platform().toLowerCase() == "android"))
+  {
+    DiscoveryModule.prototype.stopHRM = function(data, successCallback){
+      hrmmodule.HRMstopservice(data, successCallback); 
+    }
+  }  
 
   /**
    * To bind with found device that has the service requested. For Linux OS only. 

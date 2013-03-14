@@ -32,6 +32,12 @@ public class Org_webinos_api_discovery_DiscoveryManager {
 				(String)args[0]
 			);
 			break;
+		case 4: /* stopServices */
+			inst.stopServices(
+				(org.webinos.api.discovery.ServiceType)args[0],
+				(org.webinos.api.discovery.FindCallback)args[1]
+			);
+			break;
 		default:
 		}
 		return result;

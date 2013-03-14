@@ -78,6 +78,13 @@
 	  		success(params);
 	  	});
 	};
+		DiscoveryModule.prototype.stopHRM = function(data, success){
+		console.log("stop HRM");
+  		var rpc = webinos.rpcHandler.createRPC(this, "stopHRM", arguments);
+	  	webinos.rpcHandler.executeRPC(rpc, function(params) {
+	  		success(params);
+	  	});
+	};
 
 	/**
 	 * To bind with found device that has the service requested. It lists all 

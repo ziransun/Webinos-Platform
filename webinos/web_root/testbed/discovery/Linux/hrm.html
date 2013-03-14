@@ -143,48 +143,42 @@
 				nmbrmainspan.innerHTML = service.values[0];
 			}
 		}
-
+		
+		function onStop(service){
+			alert("HRM is stopped");
+		}
+		
 		$('#startHRM').bind('click', function() {
 			var servicetype = {
 				api: 0x00200000
 			}
+			
 			var text = document.getElementById("startHRM");
 			console.log("hrm value is:" + text.innerHTML);
 			if(text.innerHTML==="StartHRM")
 			{
-				$('#startHRM').text('StopHRM');
-				try {
-					$('#loader').html("<img src='img/ajaxloader.gif'>");
-				}
-				catch(e) {
-				console.log("startHRM - loader: "+e.message);
-				}
 				try {
 					recentService.findHRM(servicetype, onFound);
 					console.log("startHRM - END");
+					$('#startHRM').text('StopHRM');
 				}
 				catch(e) {
 				console.log("startHRM - error: "+e.message);
 				}
-
-			}
-			else if(text.innerHTML==="StopHRM")
-			{
-				$('#HRM').text('StartHRM');
-				document.getElementById("loader").innerHTML = "";
-
+             }
+			 else if(text.innerHTML==="StopHRM")
+			 {
+				$('#startHRM').text('StartHRM');
 				try {
-					recentService.findHRM(servicetype);
+					recentService.stopHRM(servicetype, onStop);
 					console.log("stopHRM - END");
 				}
 				catch(e) {
 				console.log("stopHRM - error: "+e.message);
-				}
-			}
-
+			    }
+			 }
 		});
-	});
-
+   });
 	</script>
 
 </html>

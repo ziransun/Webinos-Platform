@@ -42,4 +42,15 @@ HRMfindservice = function(serviceType,onFound){
   }
 };
 
+HRMstopservice = function(serviceType,onFound) {
+  try 
+  {
+    disc.stopServices(serviceType, function(service){onFound(service);});
+  }
+  catch(e) {
+    console.log("stop HRM services- error: "+e.message);
+  }
+};
+
 exports.HRMfindservice = HRMfindservice;
+exports.HRMstopservice = HRMstopservice;

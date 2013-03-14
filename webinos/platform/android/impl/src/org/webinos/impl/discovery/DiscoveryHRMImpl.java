@@ -109,7 +109,29 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 		DiscoveryServiceImpl srv = new DiscoveryServiceImpl();
 		return srv;
 	}
-	
+  
+  //helper functions used only for HRM demo
+  
+	public void stopServices(ServiceType serviceType, FindCallback findCallBack){
+		if(serviceType == null) {
+			Log.v(TAG, "stopHRM: No serviceType specified");
+		}
+	  
+		if (mConnectedThread != null) {
+			mConnectedThread.cancel(); 
+			mConnectedThread = null;
+		}
+    
+		if(mmSocket != null) {
+			try {
+				mmSocket.close();
+				mmSocket = null;
+			} catch (IOException e) {
+				Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
+			}
+		}
+	}
+  
 	/*****************************
 	 * IModule methods
 	 *****************************/
@@ -145,8 +167,15 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 		 * perform any module shutdown here ...
 		 */
 
-		if (mConnectedThread != null) {
-					mConnectedThread.cancel(); mConnectedThread = null;
+		if (mConnectedThread != null) 
+			mConnectedThread.cancel(); 
+		
+		if(mmSocket != null) {
+			try {
+				mmSocket.close();
+			} catch (IOException e) {
+				Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
+			}
 		}
 		Log.v(TAG, "DiscoveryHRMImpl: stopModule");
 	}
@@ -407,11 +436,6 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 				mmInStream.close();} catch (IOException e) {
 					Log.e(TAG, "ConnectedThread.cancel(): close() of InputStream failed", e);
 				}
-			try {
-				mmSocket.close();
-			} catch (IOException e) {
-				Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
-			}
 		}
 	}
    
