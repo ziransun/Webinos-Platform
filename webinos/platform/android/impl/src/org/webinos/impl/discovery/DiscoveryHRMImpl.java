@@ -39,6 +39,7 @@ import org.webinos.api.PendingOperation;
 import org.webinos.api.discovery.DiscoveryManager;
 import org.webinos.api.discovery.Filter;
 import org.webinos.api.discovery.FindCallback;
+import org.webinos.api.discovery.StopCallback;
 import org.webinos.api.discovery.Options;
 import org.webinos.api.discovery.Service;
 import org.webinos.api.discovery.ServiceType;
@@ -112,7 +113,7 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
   
   //helper functions used only for HRM demo
   
-	public void stopServices(ServiceType serviceType, FindCallback findCallBack){
+	public void stopServices(ServiceType serviceType, StopCallback stopCallBack){
 		if(serviceType == null) {
 			Log.v(TAG, "stopHRM: No serviceType specified");
 		}
@@ -126,6 +127,7 @@ public class DiscoveryHRMImpl extends DiscoveryManager implements IModule {
 			try {
 				mmSocket.close();
 				mmSocket = null;
+				stopCallBack.onStop();
 			} catch (IOException e) {
 				Log.e(TAG, "ConnectedThread.cancel(): close() of connect socket failed", e);
 			}

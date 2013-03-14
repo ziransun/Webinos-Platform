@@ -580,7 +580,7 @@ var ConnectHub = function (parent) {
                 self.connect (function (status) {
                     logger.log ("retrying to connect back to the PZH " + (status ? "successful" : "failed"));
                 });
-            }, 60000);//increase time limit to suggest when it should retry connecting back to the PZH
+            }, /*60000 */ 3000);//increase time limit to suggest when it should retry connecting back to the PZH
         }
     }
 

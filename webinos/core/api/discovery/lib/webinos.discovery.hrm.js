@@ -42,10 +42,10 @@ HRMfindservice = function(serviceType,onFound){
   }
 };
 
-HRMstopservice = function(serviceType,onFound) {
+HRMstopservice = function(serviceType,onStop) {
   try 
   {
-    disc.stopServices(serviceType, function(service){onFound(service);});
+    disc.stopServices(serviceType, function(service){onStop();});
   }
   catch(e) {
     console.log("stop HRM services- error: "+e.message);

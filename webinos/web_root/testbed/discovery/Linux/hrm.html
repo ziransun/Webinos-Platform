@@ -127,6 +127,7 @@
 		function onFound(service){
 
 			document.getElementById("loader").innerHTML = "";
+			$('#startHRM').text('StopHRM');
 
 			console.log("onFound callback: found service.");
 
@@ -144,8 +145,10 @@
 			}
 		}
 		
-		function onStop(service){
+		function onStop(){
+		    document.getElementById("loader").innerHTML = "";
 			alert("HRM is stopped");
+			$('#startHRM').text('StartHRM');
 		}
 		
 		$('#startHRM').bind('click', function() {
@@ -157,24 +160,38 @@
 			console.log("hrm value is:" + text.innerHTML);
 			if(text.innerHTML==="StartHRM")
 			{
+			    try {
+					$('#loader').html("<img src='img/ajaxloader.gif'>");
+				}
+				catch(e) {
+				console.log("startHRM - loader: "+e.message);
+				}
 				try {
 					recentService.findHRM(servicetype, onFound);
 					console.log("startHRM - END");
-					$('#startHRM').text('StopHRM');
+
 				}
 				catch(e) {
 				console.log("startHRM - error: "+e.message);
+				alert("Error in starting HRM" + e.message);
 				}
              }
 			 else if(text.innerHTML==="StopHRM")
 			 {
-				$('#startHRM').text('StartHRM');
+				try {
+					$('#loader').html("<img src='img/ajaxloader.gif'>");
+				}
+				catch(e) {
+				console.log("startHRM - loader: "+e.message);
+				}
+				
 				try {
 					recentService.stopHRM(servicetype, onStop);
 					console.log("stopHRM - END");
 				}
 				catch(e) {
 				console.log("stopHRM - error: "+e.message);
+				alert("Error in stopping HRM" + e.message);
 			    }
 			 }
 		});

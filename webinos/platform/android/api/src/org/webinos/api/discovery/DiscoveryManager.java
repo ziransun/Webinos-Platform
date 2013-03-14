@@ -35,6 +35,6 @@ public abstract class DiscoveryManager extends Base {
     public abstract String getServiceId(String serviceType) throws DiscoveryError;
 	public abstract Service createService() throws DiscoveryError;
 	
-	//added for HRM demo - enable user to stop remote sensor
-	public abstract void stopServices(ServiceType serviceType, FindCallback findCallBack);
+	//Added for HRM demo - enable user to stop remote sensor
+	public abstract void stopServices(ServiceType serviceType, StopCallback stopCallBack);
 }
