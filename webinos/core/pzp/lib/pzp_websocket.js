@@ -389,9 +389,40 @@ var PzpWSS = function (parent) {
                 parent.config.userPref.ports.pzp_webSocket = parseInt (parent.config.userPref.ports.pzp_webSocket, 10) + 1;
                 logger.error ("address in use, now trying port " + parent.config.userPref.ports.pzp_webSocket);
                 httpserver.listen (parent.config.userPref.ports.pzp_webSocket, "0.0.0.0");
+                
+                var os = require("os");
+            	if(os.platform().toLowerCase() == "android") {
+                    try {
+                        var bridge = require('bridge');
+                        var notification = bridge.load('org.webinos.impl.PZPNotificationManagerImpl', this);
+                        notification.eventNotify("Stopped", function(status){
+                            logger.log("PZP stops due to error:" + err.code);
+                        });
+                    }
+                    catch(e) {
+                        logger.error("Android pzp notification - error: "+e.message);
+                    }
+                }
+                
             } else {
                 return callback (false, err);
             }
+        });
+        
+        httpserver.on ("close", function () {
+            var os = require("os");
+            if(os.platform().toLowerCase() == "android") {
+                try {
+                    var bridge = require('bridge');
+                    var notification = bridge.load('org.webinos.impl.PZPNotificationManagerImpl', this);
+                    notification.eventNotify("Stopped", function(status){
+                        logger.log("send notification on PZP status:" + status);
+                    });
+                }
+                catch(e) {
+                    logger.error("Android pzp notification - error: "+e.message);
+                }
+            } 
         });
 
         httpserver.on ("listening", function () {
@@ -723,7 +754,7 @@ var PzpWSS = function (parent) {
                     } else {
                         logger.error ("Failed to accept websocket connection: " + "wrong host or origin");
                     }
-                });
+                }); 
                 return _callback (true);
             } else {
                 return _callback (false, err);
