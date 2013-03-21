@@ -390,20 +390,6 @@ var PzpWSS = function (parent) {
                 logger.error ("address in use, now trying port " + parent.config.userPref.ports.pzp_webSocket);
                 httpserver.listen (parent.config.userPref.ports.pzp_webSocket, "0.0.0.0");
                 
-                var os = require("os");
-            	if(os.platform().toLowerCase() == "android") {
-                    try {
-                        var bridge = require('bridge');
-                        var notification = bridge.load('org.webinos.impl.PZPNotificationManagerImpl', this);
-                        notification.eventNotify("Stopped", function(status){
-                            logger.log("PZP stops due to error:" + err.code);
-                        });
-                    }
-                    catch(e) {
-                        logger.error("Android pzp notification - error: "+e.message);
-                    }
-                }
-                
             } else {
                 return callback (false, err);
             }
