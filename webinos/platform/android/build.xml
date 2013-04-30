@@ -32,6 +32,7 @@
 				node_modules/node-uuid/,
 				node_modules/optimist/,
 				node_modules/JSV/,
+				node_modules/now/,
 				webinos/web_root/webinos.js,
 				webinos/" 
 			excludes="
