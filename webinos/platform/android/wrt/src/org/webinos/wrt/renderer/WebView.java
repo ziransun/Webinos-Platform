@@ -19,19 +19,23 @@
 
 package org.webinos.wrt.renderer;
 
+import us.costan.chrome.ChromeSettings;
+import us.costan.chrome.ChromeView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.webkit.WebSettings;
+//import android.webkit.WebSettings;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class WebView extends android.webkit.WebView {
+//public class WebView extends android.webkit.WebView {
+public class WebView extends ChromeView {
 
 	private static final String TAG = "org.webinos.wrt.renderer.WebView";
 	public WebView(Context context, AttributeSet as) {
 		super(context, as);
-		WebSettings settings = getSettings();
+		//WebSettings settings = getSettings();
+		ChromeSettings settings = getSettings();
 		settings.setJavaScriptEnabled(true);
 		/* temporary: until we have the widget API */
 		settings.setDomStorageEnabled(true);

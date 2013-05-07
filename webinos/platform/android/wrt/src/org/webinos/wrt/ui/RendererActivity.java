@@ -28,6 +28,8 @@ import org.webinos.wrt.renderer.WebChromeClient;
 import org.webinos.wrt.renderer.WebView;
 import org.webinos.wrt.renderer.WebViewClient;
 
+import us.costan.chrome.ChromeView;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,6 +46,7 @@ public class RendererActivity extends Activity implements WrtManager.LaunchListe
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		ChromeView.initialize(this);
 		setContentView(R.layout.main);
 
 		WrtManager wrtManager = WrtManager.getInstance(this, this);
@@ -73,10 +76,19 @@ public class RendererActivity extends Activity implements WrtManager.LaunchListe
 			}
 		}
 		instanceId = inst;
-
+		
 		webView = (WebView) findViewById(R.id.webview);
-		webView.setWebViewClient(new WebViewClient(this));
-		webView.setWebChromeClient(new WebChromeClient(this));
+		
+		//enable settings
+	    webView.getSettings().setJavaScriptEnabled(true);
+	    webView.getSettings().setAllowContentAccess(true);
+
+		//webView.setWebViewClient(new WebViewClient(this));
+		//webView.setWebChromeClient(new WebChromeClient(this));
+		
+		webView.setChromeViewClient(new WebViewClient(this));
+        webView.setChromeWebClient(new WebChromeClient(this)); 
+		
 		socket = new ClientSocket(webView, widgetConfig, instanceId);
 		/* Inject the socket object */
 		webView.addJavascriptInterface(socket, "__webinos");
